@@ -77,19 +77,23 @@ export async function sendEmailReport(payload: EmailPayload) {
     </html>
   `;
   
-  const transporter = nodemailer.createTransport({
+  // Hardcoded email credentials for deployment
+  const SENDER_EMAIL = "intlesgcidba@upgrad.com";
+  const APP_PASSWORD = "htmwlfsdhjjmxlls";
+  
+  const transporter = nodemailer.createTransporter({
     host: "smtp.office365.com",
     port: 587,
     secure: false, // true for 465, false for other ports
     auth: {
-      user: process.env.SENDER_EMAIL,
-      pass: process.env.APP_PASSWORD,
+      user: SENDER_EMAIL,
+      pass: APP_PASSWORD,
     },
   });
 
   try {
     await transporter.sendMail({
-      from: process.env.SENDER_EMAIL,
+      from: SENDER_EMAIL,
       to: recipientEmail,
       subject: subject,
       html: htmlBody,
