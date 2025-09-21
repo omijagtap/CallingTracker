@@ -77,9 +77,9 @@ export async function sendEmailReport(payload: EmailPayload) {
     </html>
   `;
   
-  // Hardcoded email credentials for deployment
-  const SENDER_EMAIL = "intlesgcidba@upgrad.com";
-  const APP_PASSWORD = "htmwlfsdhjjmxlls";
+  // Get email credentials from environment variables
+  const SENDER_EMAIL = process.env.SENDER_EMAIL || "intlesgcidba@upgrad.com";
+  const APP_PASSWORD = process.env.APP_PASSWORD || "htmwlfsdhjjmxlls";
   
   // Try multiple SMTP configurations for better compatibility
   const transporter = nodemailer.createTransporter({

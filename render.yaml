@@ -9,8 +9,7 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-    # Add your environment variables here when deploying
-    # - key: SENDER_EMAIL
-    #   value: your-email@outlook.com
-    # - key: APP_PASSWORD  
-    #   value: your-app-password
+      - key: SENDER_EMAIL
+        value: intlesgcidba@upgrad.com
+      - key: APP_PASSWORD
+        value: htmwlfsdhjjmxlls
