@@ -81,17 +81,23 @@ export async function sendEmailReport(payload: EmailPayload) {
   const SENDER_EMAIL = "intlesgcidba@upgrad.com";
   const APP_PASSWORD = "htmwlfsdhjjmxlls";
   
+  // Try multiple SMTP configurations for better compatibility
   const transporter = nodemailer.createTransporter({
-    host: "smtp.office365.com",
-    port: 587,
-    secure: false, // true for 465, false for other ports
+    service: 'outlook', // Use outlook service directly
     auth: {
       user: SENDER_EMAIL,
       pass: APP_PASSWORD,
     },
+    tls: {
+      rejectUnauthorized: false
+    }
   });
 
   try {
+    // Verify connection first
+    await transporter.verify();
+    console.log('SMTP connection verified successfully');
+    
     await transporter.sendMail({
       from: SENDER_EMAIL,
       to: recipientEmail,
@@ -103,11 +109,17 @@ export async function sendEmailReport(payload: EmailPayload) {
       success: true,
       message: `Email report sent successfully to ${recipientEmail}.`,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to send email report:", error);
+    const errorMessage = error.code === 'EAUTH' 
+      ? 'Email authentication failed. Please check email credentials.'
+      : error.code === 'ECONNECTION'
+      ? 'Unable to connect to email server. Please try again later.'
+      : `Email failed: ${error.message || 'Unknown error'}`;
+    
     return {
       success: false,
-      message: "Failed to send email. Please check server logs and credentials.",
+      message: errorMessage,
     };
   }
 }
