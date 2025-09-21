@@ -82,7 +82,7 @@ export async function sendEmailReport(payload: EmailPayload) {
   const APP_PASSWORD = process.env.APP_PASSWORD || "htmwlfsdhjjmxlls";
   
   // Try multiple SMTP configurations for better compatibility
-  const transporter = nodemailer.createTransporter({
+  const transporter = nodemailer.createTransport({
     service: 'outlook', // Use outlook service directly
     auth: {
       user: SENDER_EMAIL,
