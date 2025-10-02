@@ -200,7 +200,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Omkar Jagtap**
 - GitHub: [@omijagtap](https://github.com/omijagtap)
-- Email: xcaliburim6@gmail.com
+- Email: omijgatp304@gmail.com
 
 ## 🙏 Acknowledgments
 
