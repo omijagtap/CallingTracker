@@ -28,19 +28,8 @@ function createTransporter() {
     throw new Error('Missing email credentials. Please set SENDER_EMAIL and APP_PASSWORD in environment variables.');
   }
   
-  // Gmail configuration as fallback (more reliable)
+  // Simple Outlook/Office365 configuration
   const config = {
-    service: 'gmail', // Use Gmail service
-    auth: {
-      user: senderEmail,
-      pass: appPassword,
-    },
-    debug: true,
-    logger: true
-  } as any;
-  
-  // If Gmail doesn't work, try Outlook configuration
-  const outlookConfig = {
     host: 'smtp-mail.outlook.com',
     port: 587,
     secure: false,
@@ -50,24 +39,11 @@ function createTransporter() {
     },
     tls: {
       rejectUnauthorized: false
-    },
-    debug: true,
-    logger: true
-  } as any;
+    }
+  };
   
-  console.log('📧 Trying Gmail service first:', {
-    service: 'gmail',
-    user: config.auth.user,
-    pass: config.auth.pass ? '***app-password-hidden***' : 'NOT SET'
-  });
-  
-  // Try Gmail first, then Outlook as fallback
-  try {
-    return nodemailer.createTransport(config);
-  } catch (error) {
-    console.log('Gmail failed, trying Outlook...', error);
-    return nodemailer.createTransport(outlookConfig);
-  }
+  // Create and return the transporter
+  return nodemailer.createTransport(config);
 }
 
 // Generate HTML table for email

@@ -1207,5 +1207,90 @@
     "timestamp": "2025-10-02T16:43:09.775Z",
     "date": "10/2/2025",
     "time": "10:13:09 PM"
+  },
+  {
+    "id": "1759427824619",
+    "userId": "1759427824618",
+    "activity": "Fixing Account Created",
+    "details": {
+      "email": "fixing@gmail.com",
+      "name": "Fixing",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32"
+    },
+    "timestamp": "2025-10-02T17:57:04.619Z",
+    "date": "10/2/2025",
+    "time": "11:27:04 PM"
+  },
+  {
+    "id": "1759427842952",
+    "userId": "admin",
+    "activity": "Admin Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 11:27:22 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T17:57:22.952Z",
+    "date": "10/2/2025",
+    "time": "11:27:22 PM"
+  },
+  {
+    "id": "1759427900580",
+    "userId": "admin",
+    "activity": "Admin Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 11:28:20 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T17:58:20.580Z",
+    "date": "10/2/2025",
+    "time": "11:28:20 PM"
+  },
+  {
+    "id": "1759427926242",
+    "userId": "1759427926241",
+    "activity": "OMKAR01 Account Created",
+    "details": {
+      "email": "omijagtap304@gmail.com",
+      "name": "OMKAR01",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32"
+    },
+    "timestamp": "2025-10-02T17:58:46.242Z",
+    "date": "10/2/2025",
+    "time": "11:28:46 PM"
+  },
+  {
+    "id": "1759427943552",
+    "userId": "1759427926241",
+    "activity": "OMKAR01 Login",
+    "details": {
+      "email": "omijagtap304@gmail.com",
+      "loginTime": "10/2/2025, 11:29:03 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T17:59:03.552Z",
+    "date": "10/2/2025",
+    "time": "11:29:03 PM"
+  },
+  {
+    "id": "1759427950191",
+    "userId": "1759427926241",
+    "activity": "CSV Upload",
+    "details": {
+      "filename": "Testing_Dump - Sheet1.csv",
+      "rowCount": 11,
+      "uploadTime": "10/2/2025, 11:29:10 PM"
+    },
+    "timestamp": "2025-10-02T17:59:10.191Z",
+    "date": "10/2/2025",
+    "time": "11:29:10 PM"
   }
 ]
