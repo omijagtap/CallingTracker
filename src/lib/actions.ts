@@ -78,12 +78,20 @@ export async function sendEmailReport(payload: EmailPayload) {
   `;
   
   // Get email credentials from environment variables
-  const SENDER_EMAIL = process.env.SENDER_EMAIL || "intlesgcidba@upgrad.com";
-  const APP_PASSWORD = process.env.APP_PASSWORD || "htmwlfsdhjjmxlls";
+  const SENDER_EMAIL = process.env.SENDER_EMAIL;
+  const APP_PASSWORD = process.env.APP_PASSWORD;
+
+  if (!SENDER_EMAIL || !APP_PASSWORD) {
+    console.error('Missing email credentials in environment variables');
+    return {
+      success: false,
+      message: 'Email configuration is incomplete. Please contact support.',
+    };
+  }
   
-  // Try multiple SMTP configurations for better compatibility
+  // Configure Gmail SMTP
   const transporter = nodemailer.createTransport({
-    service: 'outlook', // Use outlook service directly
+    service: 'gmail',
     auth: {
       user: SENDER_EMAIL,
       pass: APP_PASSWORD,

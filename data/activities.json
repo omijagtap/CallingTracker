@@ -1,0 +1,1211 @@
+[
+  {
+    "id": "1759397742888",
+    "userId": "1759390305509",
+    "activity": "User Login",
+    "details": {
+      "email": "pro@gmail.com",
+      "loginTime": "10/2/2025, 3:05:42 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T09:35:42.888Z",
+    "date": "10/2/2025",
+    "time": "3:05:42 PM"
+  },
+  {
+    "id": "1759397979293",
+    "userId": "1759390305509",
+    "activity": "User Login",
+    "details": {
+      "email": "pro@gmail.com",
+      "loginTime": "10/2/2025, 3:09:39 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T09:39:39.293Z",
+    "date": "10/2/2025",
+    "time": "3:09:39 PM"
+  },
+  {
+    "id": "1759398007945",
+    "userId": "1759390305509",
+    "activity": "User Login",
+    "details": {
+      "email": "pro@gmail.com",
+      "loginTime": "10/2/2025, 3:10:07 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T09:40:07.945Z",
+    "date": "10/2/2025",
+    "time": "3:10:07 PM"
+  },
+  {
+    "id": "1759398337319",
+    "userId": "1759390305509",
+    "activity": "User Logout",
+    "details": {
+      "email": "pro@gmail.com",
+      "logoutTime": "10/2/2025, 3:15:37 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T09:45:37.319Z",
+    "date": "10/2/2025",
+    "time": "3:15:37 PM"
+  },
+  {
+    "id": "1759398339906",
+    "userId": "1759390305509",
+    "activity": "User Login",
+    "details": {
+      "email": "pro@gmail.com",
+      "loginTime": "10/2/2025, 3:15:39 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T09:45:39.906Z",
+    "date": "10/2/2025",
+    "time": "3:15:39 PM"
+  },
+  {
+    "id": "1759398742553",
+    "userId": "1759390305509",
+    "activity": "User Login",
+    "details": {
+      "email": "pro@gmail.com",
+      "loginTime": "10/2/2025, 3:22:22 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T09:52:22.553Z",
+    "date": "10/2/2025",
+    "time": "3:22:22 PM"
+  },
+  {
+    "id": "1759398752532",
+    "userId": "1759390305509",
+    "activity": "User Login",
+    "details": {
+      "email": "pro@gmail.com",
+      "loginTime": "10/2/2025, 3:22:32 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T09:52:32.532Z",
+    "date": "10/2/2025",
+    "time": "3:22:32 PM"
+  },
+  {
+    "id": "1759398761508",
+    "userId": "1759390305509",
+    "activity": "User Login",
+    "details": {
+      "email": "pro@gmail.com",
+      "loginTime": "10/2/2025, 3:22:41 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T09:52:41.508Z",
+    "date": "10/2/2025",
+    "time": "3:22:41 PM"
+  },
+  {
+    "id": "1759399163349",
+    "userId": "1759390305509",
+    "activity": "User Logout",
+    "details": {
+      "email": "pro@gmail.com",
+      "logoutTime": "10/2/2025, 3:29:23 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T09:59:23.349Z",
+    "date": "10/2/2025",
+    "time": "3:29:23 PM"
+  },
+  {
+    "id": "1759399165997",
+    "userId": "1759390305509",
+    "activity": "User Login",
+    "details": {
+      "email": "pro@gmail.com",
+      "loginTime": "10/2/2025, 3:29:25 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T09:59:25.997Z",
+    "date": "10/2/2025",
+    "time": "3:29:25 PM"
+  },
+  {
+    "id": "1759399170575",
+    "userId": "1759390305509",
+    "activity": "User Logout",
+    "details": {
+      "email": "pro@gmail.com",
+      "logoutTime": "10/2/2025, 3:29:30 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T09:59:30.575Z",
+    "date": "10/2/2025",
+    "time": "3:29:30 PM"
+  },
+  {
+    "id": "1759399185167",
+    "userId": "1759390305509",
+    "activity": "User Login",
+    "details": {
+      "email": "pro@gmail.com",
+      "loginTime": "10/2/2025, 3:29:45 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T09:59:45.167Z",
+    "date": "10/2/2025",
+    "time": "3:29:45 PM"
+  },
+  {
+    "id": "1759399189101",
+    "userId": "1759390305509",
+    "activity": "User Logout",
+    "details": {
+      "email": "pro@gmail.com",
+      "logoutTime": "10/2/2025, 3:29:49 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T09:59:49.101Z",
+    "date": "10/2/2025",
+    "time": "3:29:49 PM"
+  },
+  {
+    "id": "1759399195669",
+    "userId": "1759390305509",
+    "activity": "User Login",
+    "details": {
+      "email": "pro@gmail.com",
+      "loginTime": "10/2/2025, 3:29:55 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T09:59:55.669Z",
+    "date": "10/2/2025",
+    "time": "3:29:55 PM"
+  },
+  {
+    "id": "1759399843717",
+    "userId": "1759390305509",
+    "activity": "User Logout",
+    "details": {
+      "email": "pro@gmail.com",
+      "logoutTime": "10/2/2025, 3:40:43 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T10:10:43.717Z",
+    "date": "10/2/2025",
+    "time": "3:40:43 PM"
+  },
+  {
+    "id": "1759399871632",
+    "userId": "1759399871632",
+    "activity": "Account Created",
+    "details": {
+      "email": "xcaliburim6@gmail.com",
+      "name": "Omkar",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32"
+    },
+    "timestamp": "2025-10-02T10:11:11.632Z",
+    "date": "10/2/2025",
+    "time": "3:41:11 PM"
+  },
+  {
+    "id": "1759400061576",
+    "userId": "1759399871632",
+    "activity": "User Logout",
+    "details": {
+      "email": "xcaliburim6@gmail.com",
+      "logoutTime": "10/2/2025, 3:44:21 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T10:14:21.576Z",
+    "date": "10/2/2025",
+    "time": "3:44:21 PM"
+  },
+  {
+    "id": "1759400063132",
+    "userId": "1759399871632",
+    "activity": "User Login",
+    "details": {
+      "email": "xcaliburim6@gmail.com",
+      "loginTime": "10/2/2025, 3:44:23 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T10:14:23.132Z",
+    "date": "10/2/2025",
+    "time": "3:44:23 PM"
+  },
+  {
+    "id": "1759400071509",
+    "userId": "1759399871632",
+    "activity": "User Logout",
+    "details": {
+      "email": "xcaliburim6@gmail.com",
+      "logoutTime": "10/2/2025, 3:44:31 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T10:14:31.509Z",
+    "date": "10/2/2025",
+    "time": "3:44:31 PM"
+  },
+  {
+    "id": "1759400073128",
+    "userId": "1759399871632",
+    "activity": "User Login",
+    "details": {
+      "email": "xcaliburim6@gmail.com",
+      "loginTime": "10/2/2025, 3:44:33 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T10:14:33.128Z",
+    "date": "10/2/2025",
+    "time": "3:44:33 PM"
+  },
+  {
+    "id": "1759401469898",
+    "userId": "1759399871632",
+    "activity": "User Logout",
+    "details": {
+      "email": "xcaliburim6@gmail.com",
+      "logoutTime": "10/2/2025, 4:07:49 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T10:37:49.899Z",
+    "date": "10/2/2025",
+    "time": "4:07:49 PM"
+  },
+  {
+    "id": "1759401483211",
+    "userId": "1759399871632",
+    "activity": "User Login",
+    "details": {
+      "email": "xcaliburim6@gmail.com",
+      "loginTime": "10/2/2025, 4:08:03 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T10:38:03.211Z",
+    "date": "10/2/2025",
+    "time": "4:08:03 PM"
+  },
+  {
+    "id": "1759403547391",
+    "userId": "1759399871632",
+    "activity": "User Logout",
+    "details": {
+      "email": "xcaliburim6@gmail.com",
+      "logoutTime": "10/2/2025, 4:42:27 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T11:12:27.391Z",
+    "date": "10/2/2025",
+    "time": "4:42:27 PM"
+  },
+  {
+    "id": "1759406822575",
+    "userId": "1759399871632",
+    "activity": "User Login",
+    "details": {
+      "email": "xcaliburim6@gmail.com",
+      "loginTime": "10/2/2025, 5:37:02 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T12:07:02.575Z",
+    "date": "10/2/2025",
+    "time": "5:37:02 PM"
+  },
+  {
+    "id": "1759406992480",
+    "userId": "1759399871632",
+    "activity": "User Logout",
+    "details": {
+      "email": "xcaliburim6@gmail.com",
+      "logoutTime": "10/2/2025, 5:39:52 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T12:09:52.480Z",
+    "date": "10/2/2025",
+    "time": "5:39:52 PM"
+  },
+  {
+    "id": "1759407010281",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 5:40:10 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T12:10:10.281Z",
+    "date": "10/2/2025",
+    "time": "5:40:10 PM"
+  },
+  {
+    "id": "1759408165486",
+    "userId": "admin",
+    "activity": "User Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 5:59:25 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T12:29:25.486Z",
+    "date": "10/2/2025",
+    "time": "5:59:25 PM"
+  },
+  {
+    "id": "1759408167480",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 5:59:27 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T12:29:27.480Z",
+    "date": "10/2/2025",
+    "time": "5:59:27 PM"
+  },
+  {
+    "id": "1759408170195",
+    "userId": "admin",
+    "activity": "User Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 5:59:30 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T12:29:30.195Z",
+    "date": "10/2/2025",
+    "time": "5:59:30 PM"
+  },
+  {
+    "id": "1759408175194",
+    "userId": "1759399871632",
+    "activity": "User Login",
+    "details": {
+      "email": "xcaliburim6@gmail.com",
+      "loginTime": "10/2/2025, 5:59:35 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T12:29:35.194Z",
+    "date": "10/2/2025",
+    "time": "5:59:35 PM"
+  },
+  {
+    "id": "1759408185464",
+    "userId": "1759399871632",
+    "activity": "CSV Upload",
+    "details": {
+      "filename": "Testing_Dump - Sheet1.csv",
+      "rowCount": 11,
+      "uploadTime": "10/2/2025, 5:59:45 PM"
+    },
+    "timestamp": "2025-10-02T12:29:45.464Z",
+    "date": "10/2/2025",
+    "time": "5:59:45 PM"
+  },
+  {
+    "id": "1759408369933",
+    "userId": "1759399871632",
+    "activity": "User Logout",
+    "details": {
+      "email": "xcaliburim6@gmail.com",
+      "logoutTime": "10/2/2025, 6:02:49 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T12:32:49.933Z",
+    "date": "10/2/2025",
+    "time": "6:02:49 PM"
+  },
+  {
+    "id": "1759408373799",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 6:02:53 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T12:32:53.799Z",
+    "date": "10/2/2025",
+    "time": "6:02:53 PM"
+  },
+  {
+    "id": "1759408386826",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 6:03:06 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T12:33:06.826Z",
+    "date": "10/2/2025",
+    "time": "6:03:06 PM"
+  },
+  {
+    "id": "1759409839760",
+    "userId": "admin",
+    "activity": "User Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 6:27:19 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T12:57:19.760Z",
+    "date": "10/2/2025",
+    "time": "6:27:19 PM"
+  },
+  {
+    "id": "1759409846462",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 6:27:26 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T12:57:26.462Z",
+    "date": "10/2/2025",
+    "time": "6:27:26 PM"
+  },
+  {
+    "id": "1759409861917",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 6:27:41 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T12:57:41.917Z",
+    "date": "10/2/2025",
+    "time": "6:27:41 PM"
+  },
+  {
+    "id": "1759409938569",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 6:28:58 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T12:58:58.569Z",
+    "date": "10/2/2025",
+    "time": "6:28:58 PM"
+  },
+  {
+    "id": "1759411010967",
+    "userId": "admin",
+    "activity": "User Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 6:46:50 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T13:16:50.967Z",
+    "date": "10/2/2025",
+    "time": "6:46:50 PM"
+  },
+  {
+    "id": "1759411051574",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 6:47:31 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T13:17:31.574Z",
+    "date": "10/2/2025",
+    "time": "6:47:31 PM"
+  },
+  {
+    "id": "1759411137962",
+    "userId": "admin",
+    "activity": "User Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 6:48:57 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T13:18:57.962Z",
+    "date": "10/2/2025",
+    "time": "6:48:57 PM"
+  },
+  {
+    "id": "1759411197662",
+    "userId": "1759411197662",
+    "activity": "Account Created",
+    "details": {
+      "email": "test@gmail.com",
+      "name": "Test",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32"
+    },
+    "timestamp": "2025-10-02T13:19:57.662Z",
+    "date": "10/2/2025",
+    "time": "6:49:57 PM"
+  },
+  {
+    "id": "1759411212209",
+    "userId": "1759411197662",
+    "activity": "CSV Upload",
+    "details": {
+      "filename": "Testing_Dump - Sheet1.csv",
+      "rowCount": 11,
+      "uploadTime": "10/2/2025, 6:50:12 PM"
+    },
+    "timestamp": "2025-10-02T13:20:12.209Z",
+    "date": "10/2/2025",
+    "time": "6:50:12 PM"
+  },
+  {
+    "id": "1759411401288",
+    "userId": "1759411197662",
+    "activity": "User Logout",
+    "details": {
+      "email": "test@gmail.com",
+      "logoutTime": "10/2/2025, 6:53:21 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T13:23:21.288Z",
+    "date": "10/2/2025",
+    "time": "6:53:21 PM"
+  },
+  {
+    "id": "1759411404764",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 6:53:24 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T13:23:24.764Z",
+    "date": "10/2/2025",
+    "time": "6:53:24 PM"
+  },
+  {
+    "id": "1759412349545",
+    "userId": "admin",
+    "activity": "User Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 7:09:09 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T13:39:09.545Z",
+    "date": "10/2/2025",
+    "time": "7:09:09 PM"
+  },
+  {
+    "id": "1759412809986",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 7:16:49 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T13:46:49.986Z",
+    "date": "10/2/2025",
+    "time": "7:16:49 PM"
+  },
+  {
+    "id": "1759412872318",
+    "userId": "admin",
+    "activity": "User Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 7:17:52 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T13:47:52.318Z",
+    "date": "10/2/2025",
+    "time": "7:17:52 PM"
+  },
+  {
+    "id": "1759413577981",
+    "userId": "1759413577981",
+    "activity": "Account Created",
+    "details": {
+      "email": "xcaliburim6@gmail.com",
+      "name": "Omkar",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32"
+    },
+    "timestamp": "2025-10-02T13:59:37.981Z",
+    "date": "10/2/2025",
+    "time": "7:29:37 PM"
+  },
+  {
+    "id": "1759413613205",
+    "userId": "1759413577981",
+    "activity": "CSV Upload",
+    "details": {
+      "filename": "Testing_Dump - Sheet1.csv",
+      "rowCount": 11,
+      "uploadTime": "10/2/2025, 7:30:13 PM"
+    },
+    "timestamp": "2025-10-02T14:00:13.206Z",
+    "date": "10/2/2025",
+    "time": "7:30:13 PM"
+  },
+  {
+    "id": "1759413707567",
+    "userId": "1759413577981",
+    "activity": "User Logout",
+    "details": {
+      "email": "xcaliburim6@gmail.com",
+      "logoutTime": "10/2/2025, 7:31:47 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T14:01:47.567Z",
+    "date": "10/2/2025",
+    "time": "7:31:47 PM"
+  },
+  {
+    "id": "1759413849290",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 7:34:09 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T14:04:09.290Z",
+    "date": "10/2/2025",
+    "time": "7:34:09 PM"
+  },
+  {
+    "id": "1759414085525",
+    "userId": "admin",
+    "activity": "User Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 7:38:05 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T14:08:05.525Z",
+    "date": "10/2/2025",
+    "time": "7:38:05 PM"
+  },
+  {
+    "id": "1759416967162",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 8:26:07 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T14:56:07.162Z",
+    "date": "10/2/2025",
+    "time": "8:26:07 PM"
+  },
+  {
+    "id": "1759417326970",
+    "userId": "admin",
+    "activity": "User Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 8:32:06 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T15:02:06.970Z",
+    "date": "10/2/2025",
+    "time": "8:32:06 PM"
+  },
+  {
+    "id": "1759417344164",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 8:32:24 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T15:02:24.164Z",
+    "date": "10/2/2025",
+    "time": "8:32:24 PM"
+  },
+  {
+    "id": "1759417359244",
+    "userId": "admin",
+    "activity": "User Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 8:32:39 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T15:02:39.245Z",
+    "date": "10/2/2025",
+    "time": "8:32:39 PM"
+  },
+  {
+    "id": "1759417452186",
+    "userId": "1759417452185",
+    "activity": "Account Created",
+    "details": {
+      "email": "test1@gmail.com",
+      "name": "Test1",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32"
+    },
+    "timestamp": "2025-10-02T15:04:12.186Z",
+    "date": "10/2/2025",
+    "time": "8:34:12 PM"
+  },
+  {
+    "id": "1759417460476",
+    "userId": "1759417452185",
+    "activity": "User Login",
+    "details": {
+      "email": "test1@gmail.com",
+      "loginTime": "10/2/2025, 8:34:20 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T15:04:20.476Z",
+    "date": "10/2/2025",
+    "time": "8:34:20 PM"
+  },
+  {
+    "id": "1759417470329",
+    "userId": "1759417452185",
+    "activity": "CSV Upload",
+    "details": {
+      "filename": "Testing_Dump - Sheet1.csv",
+      "rowCount": 11,
+      "uploadTime": "10/2/2025, 8:34:30 PM"
+    },
+    "timestamp": "2025-10-02T15:04:30.329Z",
+    "date": "10/2/2025",
+    "time": "8:34:30 PM"
+  },
+  {
+    "id": "1759418654092",
+    "userId": "1759417452185",
+    "activity": "CSV Upload",
+    "details": {
+      "filename": "Testing_Dump - Sheet1.csv",
+      "rowCount": 11,
+      "uploadTime": "10/2/2025, 8:54:14 PM"
+    },
+    "timestamp": "2025-10-02T15:24:14.092Z",
+    "date": "10/2/2025",
+    "time": "8:54:14 PM"
+  },
+  {
+    "id": "1759418782204",
+    "userId": "1759417452185",
+    "activity": "User Logout",
+    "details": {
+      "email": "test1@gmail.com",
+      "logoutTime": "10/2/2025, 8:56:22 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T15:26:22.204Z",
+    "date": "10/2/2025",
+    "time": "8:56:22 PM"
+  },
+  {
+    "id": "1759418790436",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 8:56:30 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T15:26:30.436Z",
+    "date": "10/2/2025",
+    "time": "8:56:30 PM"
+  },
+  {
+    "id": "1759419521229",
+    "userId": "admin",
+    "activity": "User Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 9:08:41 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T15:38:41.229Z",
+    "date": "10/2/2025",
+    "time": "9:08:41 PM"
+  },
+  {
+    "id": "1759419529213",
+    "userId": "1759417452185",
+    "activity": "User Login",
+    "details": {
+      "email": "test1@gmail.com",
+      "loginTime": "10/2/2025, 9:08:49 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T15:38:49.213Z",
+    "date": "10/2/2025",
+    "time": "9:08:49 PM"
+  },
+  {
+    "id": "1759419539698",
+    "userId": "1759417452185",
+    "activity": "CSV Upload",
+    "details": {
+      "filename": "Testing_Dump - Sheet1.csv",
+      "rowCount": 11,
+      "uploadTime": "10/2/2025, 9:08:59 PM"
+    },
+    "timestamp": "2025-10-02T15:38:59.698Z",
+    "date": "10/2/2025",
+    "time": "9:08:59 PM"
+  },
+  {
+    "id": "1759419599975",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 9:09:59 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T15:39:59.975Z",
+    "date": "10/2/2025",
+    "time": "9:09:59 PM"
+  },
+  {
+    "id": "1759419817261",
+    "userId": "admin",
+    "activity": "User Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 9:13:37 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T15:43:37.261Z",
+    "date": "10/2/2025",
+    "time": "9:13:37 PM"
+  },
+  {
+    "id": "1759419873881",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 9:14:33 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T15:44:33.881Z",
+    "date": "10/2/2025",
+    "time": "9:14:33 PM"
+  },
+  {
+    "id": "1759420188104",
+    "userId": "admin",
+    "activity": "User Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 9:19:48 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T15:49:48.104Z",
+    "date": "10/2/2025",
+    "time": "9:19:48 PM"
+  },
+  {
+    "id": "1759420194243",
+    "userId": "admin",
+    "activity": "User Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 9:19:54 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T15:49:54.243Z",
+    "date": "10/2/2025",
+    "time": "9:19:54 PM"
+  },
+  {
+    "id": "1759420201701",
+    "userId": "admin",
+    "activity": "User Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 9:20:01 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T15:50:01.701Z",
+    "date": "10/2/2025",
+    "time": "9:20:01 PM"
+  },
+  {
+    "id": "1759420208082",
+    "userId": "1759417452185",
+    "activity": "User Login",
+    "details": {
+      "email": "test1@gmail.com",
+      "loginTime": "10/2/2025, 9:20:08 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T15:50:08.082Z",
+    "date": "10/2/2025",
+    "time": "9:20:08 PM"
+  },
+  {
+    "id": "1759420493495",
+    "userId": "1759417452185",
+    "activity": "User Logout",
+    "details": {
+      "email": "test1@gmail.com",
+      "logoutTime": "10/2/2025, 9:24:53 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T15:54:53.495Z",
+    "date": "10/2/2025",
+    "time": "9:24:53 PM"
+  },
+  {
+    "id": "1759420498048",
+    "userId": "1759417452185",
+    "activity": "User Login",
+    "details": {
+      "email": "test1@gmail.com",
+      "loginTime": "10/2/2025, 9:24:58 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T15:54:58.048Z",
+    "date": "10/2/2025",
+    "time": "9:24:58 PM"
+  },
+  {
+    "id": "1759420733665",
+    "userId": "1759417452185",
+    "activity": "Test1 Logout",
+    "details": {
+      "email": "test1@gmail.com",
+      "logoutTime": "10/2/2025, 9:28:53 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T15:58:53.665Z",
+    "date": "10/2/2025",
+    "time": "9:28:53 PM"
+  },
+  {
+    "id": "1759420742032",
+    "userId": "admin",
+    "activity": "Admin Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 9:29:02 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T15:59:02.032Z",
+    "date": "10/2/2025",
+    "time": "9:29:02 PM"
+  },
+  {
+    "id": "1759421017544",
+    "userId": "admin",
+    "activity": "Admin Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 9:33:37 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T16:03:37.544Z",
+    "date": "10/2/2025",
+    "time": "9:33:37 PM"
+  },
+  {
+    "id": "1759421031775",
+    "userId": "1759417452185",
+    "activity": "Test1 Login",
+    "details": {
+      "email": "test1@gmail.com",
+      "loginTime": "10/2/2025, 9:33:51 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true
+    },
+    "timestamp": "2025-10-02T16:03:51.775Z",
+    "date": "10/2/2025",
+    "time": "9:33:51 PM"
+  },
+  {
+    "id": "1759421040547",
+    "userId": "1759417452185",
+    "activity": "CSV Upload",
+    "details": {
+      "filename": "Testing_Dump - Sheet1.csv",
+      "rowCount": 11,
+      "uploadTime": "10/2/2025, 9:34:00 PM"
+    },
+    "timestamp": "2025-10-02T16:04:00.547Z",
+    "date": "10/2/2025",
+    "time": "9:34:00 PM"
+  },
+  {
+    "id": "1759421073257",
+    "userId": "1759417452185",
+    "activity": "Test1 Logout",
+    "details": {
+      "email": "test1@gmail.com",
+      "logoutTime": "10/2/2025, 9:34:33 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T16:04:33.257Z",
+    "date": "10/2/2025",
+    "time": "9:34:33 PM"
+  },
+  {
+    "id": "1759421083148",
+    "userId": "admin",
+    "activity": "Admin Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 9:34:43 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T16:04:43.148Z",
+    "date": "10/2/2025",
+    "time": "9:34:43 PM"
+  },
+  {
+    "id": "1759421346536",
+    "userId": "admin",
+    "activity": "Admin Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 9:39:06 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T16:09:06.536Z",
+    "date": "10/2/2025",
+    "time": "9:39:06 PM"
+  },
+  {
+    "id": "1759423345357",
+    "userId": "admin",
+    "activity": "Admin Login",
+    "details": {
+      "email": "admin@system",
+      "loginTime": "10/2/2025, 10:12:25 PM",
+      "browser": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "platform": "Win32",
+      "isReturningUser": true,
+      "role": "admin"
+    },
+    "timestamp": "2025-10-02T16:42:25.358Z",
+    "date": "10/2/2025",
+    "time": "10:12:25 PM"
+  },
+  {
+    "id": "1759423389775",
+    "userId": "admin",
+    "activity": "Admin Logout",
+    "details": {
+      "email": "admin@system",
+      "logoutTime": "10/2/2025, 10:13:09 PM",
+      "sessionDuration": "Unknown"
+    },
+    "timestamp": "2025-10-02T16:43:09.775Z",
+    "date": "10/2/2025",
+    "time": "10:13:09 PM"
+  }
+]

@@ -1,10 +1,16 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useEffect, useMemo, useCallback, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useHomeState } from "@/hooks/use-home-state";
+// Removed LearnerHistory import for admin-only redesign
+import { UserDashboard } from "@/components/app/user-dashboard";
+import { AdminDashboard } from "@/components/app/admin-dashboard";
+import { CallingTracker } from "@/components/app/calling-tracker";
+import { AdminCallingTracker } from "@/components/app/admin-calling-tracker";
 import {
   Card,
   CardContent,
@@ -45,11 +51,15 @@ import {
   X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth-context";
+import Link from "next/link";
+import { useRouter } from 'next/navigation';
 
 import { LearnerData, Remark } from "@/lib/types";
 import { sendEmailReport } from "@/lib/actions";
 import { EditRemarkDialog } from "@/components/app/edit-remark-dialog";
 import { EmailReportDialog } from "@/components/app/email-report-dialog";
+
 import { IconUpload } from "@/components/icons";
 import { Stepper } from "@/components/app/stepper";
 import { Label } from "@/components/ui/label";
@@ -62,7 +72,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-type UploadState = "idle" | "validating" | "error" | "success";
+export type UploadState = "idle" | "validating" | "error" | "success";
 type SubmissionSummary = { name: string; value: number };
 
 const INITIAL_COL_INDICES = {
@@ -191,52 +201,55 @@ const generateRemarkKey = (learner: LearnerData): string => {
 }
 
 export default function Home() {
-  const [uploadState, setUploadState] = useState<UploadState>("idle");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [fileName, setFileName] = useState<string>("");
-  const [csvContent, setCsvContent] = useState<string>("");
-  const [learnerData, setLearnerData] = useState<LearnerData[]>([]);
-  const [uniqueCohorts, setUniqueCohorts] = useState<string[]>([]);
-  const [selectedCohorts, setSelectedCohorts] = useState<string[]>([]);
-  const [remarks, setRemarks] = useState<Remark[]>([]);
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
-  const [isRemarkDialogOpen, setRemarkDialogOpen] = useState(false);
-  const [isEmailDialogOpen, setEmailDialogOpen] = useState(false);
-  const [currentLearner, setCurrentLearner] = useState<LearnerData | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isSummaryView, setSummaryView] = useState(false);
-  const [isReportGenerated, setReportGenerated] = useState(false);
-  const [colIndices, setColIndices] = useState(INITIAL_COL_INDICES);
+  const state = useHomeState();
 
 
   const { toast } = useToast();
+  const { user, loading, logout, isAdmin } = useAuth();
+  const router = useRouter();
+  const [tracking, setTracking] = useState<{ totals?: { uploads: number; remarks: number; learnersTracked: number }, recent?: any } | null>(null);
+  const [adminUsers, setAdminUsers] = useState<any[]>([]);
+  const [adminActivities, setAdminActivities] = useState<any[]>([]);
+  const [adminTotals, setAdminTotals] = useState<{ uploads: number; remarks: number; learnersTracked: number } | null>(null);
+  const [adminCohortDist, setAdminCohortDist] = useState<Record<string, number>>({});
+  const [adminFilter, setAdminFilter] = useState<string>("");
+  const [adminStartDate, setAdminStartDate] = useState<string>("");
+  const [adminEndDate, setAdminEndDate] = useState<string>("");
+  const [adminSelectedUserId, setAdminSelectedUserId] = useState<string>("");
+  const [adminRecentRemarks, setAdminRecentRemarks] = useState<any[]>([]);
+  const [timelinePage, setTimelinePage] = useState<number>(1);
+  const TIMELINE_PAGE_SIZE = 9;
+  const [currentView, setCurrentView] = useState<'home' | 'dashboard' | 'calling-tracker'>('home');
+  // profile menu removed per request
   const { register, handleSubmit, setValue, reset } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
   });
   
+  const { setUploadState, setErrorMessage, setLearnerData, setUniqueCohorts, setSelectedCohorts, setRemarks } = state;
+
   const processCsvData = useCallback((content: string, indices: typeof INITIAL_COL_INDICES) => {
     const { data, error } = parseCsvContent(content, indices);
 
     if (error) {
-        setUploadState("error");
-        setErrorMessage(error);
-        setLearnerData([]);
-        setUniqueCohorts([]);
-        setSelectedCohorts([]);
-        setRemarks([]);
+        state.setUploadState("error");
+        state.setErrorMessage(error);
+        state.setLearnerData([]);
+        state.setUniqueCohorts([]);
+        state.setSelectedCohorts([]);
+        state.setRemarks([]);
         return;
     }
     
     const cohorts = [...new Set(data.map((row) => row.Cohort || "N/A"))].filter(Boolean) as string[];
     
-    setLearnerData(data);
-    setUniqueCohorts(cohorts);
-    setUploadState("success");
-    setErrorMessage(null);
+    state.setLearnerData(data);
+    state.setUniqueCohorts(cohorts);
+    state.setUploadState("success");
+    state.setErrorMessage(null);
     // Reset selections when data is re-processed
-    setSelectedCohorts([]);
-    setRemarks([]);
-  }, []);
+    state.setSelectedCohorts([]);
+    state.setRemarks([]);
+  }, [setUploadState, setErrorMessage, setLearnerData, setUniqueCohorts, setSelectedCohorts, setRemarks]);
 
   // Load state from localStorage on initial render
   useEffect(() => {
@@ -244,14 +257,14 @@ export default function Home() {
       const savedState = localStorage.getItem('appState');
       if (savedState) {
         const parsedState = JSON.parse(savedState);
-        setUploadState(parsedState.uploadState || "idle");
-        setFileName(parsedState.fileName || "");
-        setCsvContent(parsedState.csvContent || "");
-        setLearnerData(parsedState.learnerData || []);
-        setUniqueCohorts(parsedState.uniqueCohorts || []);
-        setSelectedCohorts(parsedState.selectedCohorts || []);
-        setRemarks(parsedState.remarks || []);
-        setColIndices(parsedState.colIndices || INITIAL_COL_INDICES);
+        state.setUploadState(parsedState.uploadState || "idle");
+        state.setFileName(parsedState.fileName || "");
+        state.setCsvContent(parsedState.csvContent || "");
+        state.setLearnerData(parsedState.learnerData || []);
+        state.setUniqueCohorts(parsedState.uniqueCohorts || []);
+        state.setSelectedCohorts(parsedState.selectedCohorts || []);
+        state.setRemarks(parsedState.remarks || []);
+        state.setColIndices(parsedState.colIndices || INITIAL_COL_INDICES);
         
         if (parsedState.csvContent) {
             processCsvData(parsedState.csvContent, parsedState.colIndices || INITIAL_COL_INDICES);
@@ -265,41 +278,126 @@ export default function Home() {
   // Save state to localStorage whenever it changes
   useEffect(() => {
     const appState = {
-      uploadState,
-      fileName,
-      csvContent,
-      learnerData,
-      uniqueCohorts,
-      selectedCohorts,
-      remarks,
-      colIndices,
+      uploadState: state.uploadState,
+      fileName: state.fileName,
+      csvContent: state.csvContent,
+      learnerData: state.learnerData,
+      uniqueCohorts: state.uniqueCohorts,
+      selectedCohorts: state.selectedCohorts,
+      remarks: state.remarks,
+      colIndices: state.colIndices,
     };
     try {
-        if (uploadState !== 'idle') {
+        if (state.uploadState !== 'idle') {
             localStorage.setItem('appState', JSON.stringify(appState));
         }
     } catch (error) {
       console.error("Failed to save state to localStorage", error);
     }
-  }, [uploadState, fileName, csvContent, learnerData, uniqueCohorts, selectedCohorts, remarks, colIndices]);
+  }, [state.uploadState, state.fileName, state.csvContent, state.learnerData, state.uniqueCohorts, state.selectedCohorts, state.remarks, state.colIndices]);
   
   const processFile = async (file: File) => {
-    setUploadState("validating");
-    setFileName(file.name);
-    setReportGenerated(false);
+    state.setUploadState("validating");
+    state.setFileName(file.name);
+    state.setReportGenerated(false);
     
     const content = await file.text();
-    setCsvContent(content);
-    processCsvData(content, colIndices);
+    state.setCsvContent(content);
+    processCsvData(content, state.colIndices);
+
+    // Track CSV upload locally
+    try {
+      const parsed = parseCsvContent(content, state.colIndices);
+      const rowCount = parsed.data?.length || 0;
+      if (user && rowCount > 0) {
+        console.log(`✅ CSV uploaded: ${file.name} with ${rowCount} rows by ${user.name || user.email}`);
+
+        // Store upload info locally
+        const uploads = JSON.parse(localStorage.getItem('csv_uploads') || '[]');
+        uploads.push({
+          userId: user.id,
+          filename: file.name,
+          rowCount,
+          uploadedAt: new Date().toISOString(),
+          fileSize: file.size,
+          uploadTime: new Date().toLocaleString()
+        });
+        localStorage.setItem('csv_uploads', JSON.stringify(uploads));
+
+        // Track activity
+        const activities = JSON.parse(localStorage.getItem('user_activity') || '[]');
+        activities.push({
+          id: Date.now().toString(),
+          userId: user.id,
+          activity: 'CSV Upload',
+          details: {
+            filename: file.name,
+            rowCount,
+            fileSize: file.size,
+            uploadTime: new Date().toLocaleString()
+          },
+          timestamp: new Date().toISOString(),
+          date: new Date().toLocaleDateString(),
+          time: new Date().toLocaleTimeString()
+        });
+        localStorage.setItem('user_activity', JSON.stringify(activities));
+
+        // Notify UI listeners
+        window.dispatchEvent(new CustomEvent('storageUpdated'));
+
+        // Also persist to tracking.json via API and server activity
+        try {
+          const submitted = parsed.data.filter((r: any) => r['Submission Status'] === 'Submitted').length;
+          const notSubmitted = rowCount - submitted;
+          const cohorts = [...new Set(parsed.data.map((r: any) => r.Cohort || ''))].filter(Boolean);
+          await fetch('/api/tracking', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'upload',
+              data: {
+                userId: user.id,
+                userName: user.name || user.email,
+                filename: file.name,
+                cohorts,
+                totalRows: rowCount,
+                submittedCount: submitted,
+                notSubmittedCount: notSubmitted,
+              }
+            })
+          });
+          // Server activities feed for Admin timeline
+          try {
+            await fetch('/api/activity', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: Date.now().toString(),
+                userId: user.id,
+                activity: 'CSV Upload',
+                details: { filename: file.name, rowCount, uploadTime: new Date().toLocaleString() },
+                timestamp: new Date().toISOString(),
+                date: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString()
+              })
+            });
+          } catch {}
+        } catch (e) {
+          console.warn('Failed to POST tracking upload', e);
+        }
+      }
+    } catch (e) {
+      console.error("❌ Failed to track CSV upload:", e);
+    }
   };
 
-  const handleColIndexChange = (key: keyof typeof colIndices, value: string) => {
+  const handleColIndexChange = (key: keyof typeof INITIAL_COL_INDICES, value: string) => {
     const newIndex = columnToIndex(value);
     if (newIndex >= 0) {
-        const newIndices = {...colIndices, [key]: newIndex };
-        setColIndices(newIndices);
-        if (csvContent) {
-            processCsvData(csvContent, newIndices);
+        const newIndices = {...state.colIndices, [key]: newIndex };
+        state.setColIndices(newIndices);
+        if (state.csvContent) {
+            processCsvData(state.csvContent, newIndices);
         }
     }
   };
@@ -314,7 +412,7 @@ export default function Home() {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(false);
+    state.setIsDragging(false);
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
        const validFiles = Array.from(files).filter(f => f.type === 'text/csv' || f.name.endsWith('.csv'));
@@ -330,29 +428,29 @@ export default function Home() {
     }
   };
   
-  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); state.setIsDragging(true); };
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); state.setIsDragging(false); };
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => { e.preventDefault(); e.stopPropagation(); };
 
   const handleCohortSelection = (cohort: string) => {
-    const newSelectedCohorts = selectedCohorts.includes(cohort)
-        ? selectedCohorts.filter((c) => c !== cohort)
-        : [...selectedCohorts, cohort];
+    const newSelectedCohorts = state.selectedCohorts.includes(cohort)
+        ? state.selectedCohorts.filter((c) => c !== cohort)
+        : [...state.selectedCohorts, cohort];
 
-    setSelectedCohorts(newSelectedCohorts);
+    state.setSelectedCohorts(newSelectedCohorts);
     
     // Clean up remarks for deselected cohorts
     const learnersInSelectedCohorts = new Set(
-      learnerData
+      state.learnerData
         .filter(learner => newSelectedCohorts.includes(learner.Cohort || 'N/A'))
         .map(learner => generateRemarkKey(learner))
     );
-    setRemarks(prevRemarks => prevRemarks.filter(remark => learnersInSelectedCohorts.has(remark.key)));
+    state.setRemarks(prevRemarks => prevRemarks.filter(remark => learnersInSelectedCohorts.has(remark.key)));
   };
   
-  const filteredData = useMemo(() => learnerData.filter((row) =>
-    selectedCohorts.includes(row.Cohort || "N/A")
-  ), [learnerData, selectedCohorts]);
+  const filteredData = useMemo(() => state.learnerData.filter((row) =>
+    state.selectedCohorts.includes(row.Cohort || "N/A")
+  ), [state.learnerData, state.selectedCohorts]);
 
   const submissionSummary: SubmissionSummary[] = useMemo(() => {
     const totalSubmitted = filteredData.filter(row => row["Submission Status"] === "Submitted").length;
@@ -364,6 +462,70 @@ export default function Home() {
   }, [filteredData]);
   
   const CHART_COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))"];
+
+  const summaryViewContent = (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Submission Summary</CardTitle>
+            <CardDescription>Overview of submission statuses for all learners in selected cohorts.</CardDescription>
+          </div>
+          <Button variant="outline" onClick={() => state.setSummaryView(false)}>Back to Main</Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+      {state.selectedCohorts.length > 0 ? (
+        <div className="grid md:grid-cols-2 gap-8 items-center">
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie data={submissionSummary} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false} label>
+                {submissionSummary.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'rgba(50, 50, 50, 0.7)',
+                  backdropFilter: 'blur(5px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: 'white',
+                }}
+              />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-center md:text-left">Detailed Breakdown</h3>
+            <div className="p-4 rounded-lg bg-muted/50 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Total Learners Selected</span>
+                <span className="font-bold text-xl">{filteredData.length}</span>
+              </div>
+              <hr className="border-border/50" />
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="text-green-500" />
+                  <span>Submitted</span>
+                </div>
+                <span className="font-semibold">{submissionSummary.find(s => s.name === 'Submitted')?.value || 0} ({filteredData.length > 0 ? ((submissionSummary.find(s => s.name === 'Submitted')?.value || 0) / filteredData.length * 100).toFixed(1) : 0}%)</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <XCircle className="text-red-500" />
+                  <span>Not Submitted</span>
+                </div>
+                <span className="font-semibold">{submissionSummary.find(s => s.name === 'Not Submitted')?.value || 0} ({filteredData.length > 0 ? ((submissionSummary.find(s => s.name === 'Not Submitted')?.value || 0) / filteredData.length * 100).toFixed(1) : 0}%)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-10 text-muted-foreground">Please select at least one cohort to see the summary.</div>
+      )}
+      </CardContent>
+    </Card>
+  );
 
   const notSubmittedData = useMemo(() => filteredData.filter(
     (row) => row["Submission Status"] === "Not Submitted"
@@ -383,13 +545,13 @@ export default function Home() {
   }, [notSubmittedData]);
 
   const handleEditRemark = (learner: LearnerData) => {
-    setCurrentLearner(learner);
-    setRemarkDialogOpen(true);
+    state.setCurrentLearner(learner);
+    state.setRemarkDialogOpen(true);
   };
 
-  const handleSaveRemark = (learner: LearnerData, remarkText: string) => {
+  const handleSaveRemark = async (learner: LearnerData, remarkText: string) => {
     const key = generateRemarkKey(learner);
-    setRemarks((prev) => {
+    state.setRemarks((prev) => {
       const existing = prev.find((r) => r.key === key);
       if (existing) {
         return prev.map((r) =>
@@ -402,11 +564,77 @@ export default function Home() {
       title: "Remark Saved",
       description: `Remark for ${learner.Email} has been updated.`,
     });
+
+    // Persist remark locally if user is logged in
+    try {
+      if (user) {
+        console.log(`💬 Remark saved for ${learner.Email}: ${remarkText}`);
+
+        // Store remark locally
+        const remarks = JSON.parse(localStorage.getItem('user_remarks') || '[]');
+        remarks.push({
+          userId: user.id,
+          learnerEmail: learner.Email,
+          learnerName: learner.Name || '',
+          remark: remarkText,
+          learnerCohort: learner.Cohort || '',
+          createdAt: new Date().toISOString(),
+          timestamp: new Date().toLocaleString()
+        });
+        localStorage.setItem('user_remarks', JSON.stringify(remarks));
+
+        // Track activity
+        const activities = JSON.parse(localStorage.getItem('user_activity') || '[]');
+        activities.push({
+          id: Date.now().toString(),
+          userId: user.id,
+          activity: 'Remark Added',
+          details: {
+            learnerEmail: learner.Email,
+            learnerName: learner.Name || '',
+            remark: remarkText.substring(0, 100) + (remarkText.length > 100 ? '...' : ''),
+            learnerCohort: learner.Cohort || ''
+          },
+          timestamp: new Date().toISOString(),
+          date: new Date().toLocaleDateString(),
+          time: new Date().toLocaleTimeString()
+        });
+        localStorage.setItem('user_activity', JSON.stringify(activities));
+
+        // Notify UI listeners
+        window.dispatchEvent(new CustomEvent('storageUpdated'));
+
+        // Also persist to tracking.json via API and server activity
+        try {
+          await fetch('/api/tracking', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'remark',
+              data: {
+                userId: user.id,
+                userName: user.name || user.email,
+                learnerEmail: learner.Email,
+                learnerCohort: learner.Cohort || '',
+                remark: remarkText,
+                csvFilename: state.fileName || ''
+              }
+            })
+          });
+        } catch (e) {
+          console.warn('Failed to POST tracking remark', e);
+        }
+
+        console.log(`✅ Remark and activity tracked for ${learner.Email}`);
+      }
+    } catch (e) {
+      console.error("❌ Failed to persist remark:", e);
+    }
   };
 
   const getRemarkForLearner = (learner: LearnerData) => {
     const key = generateRemarkKey(learner);
-    return remarks.find((r) => r.key === key)?.remark || "";
+    return state.remarks.find((r) => r.key === key)?.remark || "";
   };
 
   const handleDownload = () => {
@@ -450,11 +678,11 @@ export default function Home() {
       title: "Download Started",
       description: "Your report is being downloaded.",
     });
-    setReportGenerated(true);
+    state.setReportGenerated(true);
   };
 
   const handleEmail = async (recipientEmail: string) => {
-    setIsSendingEmail(true);
+    state.setIsSendingEmail(true);
     const reportData = notSubmittedData.map((learner) => ({
       ...learner,
       remarks: getRemarkForLearner(learner),
@@ -466,7 +694,7 @@ export default function Home() {
         title: "No data to email",
         description: "There are no learners with 'Not Submitted' status to include in the email.",
       });
-      setIsSendingEmail(false);
+      state.setIsSendingEmail(false);
       return;
     }
     
@@ -475,7 +703,7 @@ export default function Home() {
     try {
       const result = await sendEmailReport({
         recipientEmail,
-        cohortDetails: selectedCohorts.join(", "),
+        cohortDetails: state.selectedCohorts.join(", "),
         reportType: hasRemarks ? "Calling Report with Remarks" : "No Submission Report",
         reportData,
         hasRemarks,
@@ -486,7 +714,7 @@ export default function Home() {
         variant: result.success ? "default" : "destructive",
       });
       if (result.success) {
-        setReportGenerated(true);
+        state.setReportGenerated(true);
       }
     } catch (error) {
       toast({
@@ -495,30 +723,31 @@ export default function Home() {
         description: "Failed to send the email report.",
       });
     } finally {
-      setIsSendingEmail(false);
-      setEmailDialogOpen(false);
+      state.setIsSendingEmail(false);
+      state.setEmailDialogOpen(false);
+      state.setUploadState("idle");
+      state.setFileName("");
+      state.setCsvContent("");
+      state.setLearnerData([]);
+      state.setUniqueCohorts([]);
     }
   };
 
   const handleClear = () => {
-    setUploadState("idle");
-    setFileName("");
-    setCsvContent("");
-    setLearnerData([]);
-    setUniqueCohorts([]);
-    setSelectedCohorts([]);
-    setRemarks([]);
-    setSummaryView(false);
-    setReportGenerated(false);
-    setColIndices(INITIAL_COL_INDICES);
+    state.setUploadState("idle");
+    state.setFileName("");
+    state.setCsvContent("");
+    state.setLearnerData([]);
+    state.setUniqueCohorts([]);
+    state.setSelectedCohorts([]);
+    state.setRemarks([]);
+    state.setColIndices(INITIAL_COL_INDICES);
+    state.setReportGenerated(false);
     reset();
 
-    try {
-      localStorage.removeItem('appState');
-    } catch (error) {
-      console.error("Failed to clear state from localStorage", error);
-    }
-    
+    localStorage.removeItem('appState');
+    window.dispatchEvent(new CustomEvent('storageUpdated'));
+
     toast({
       title: "Data Cleared",
       description: "You can now upload a new CSV file.",
@@ -530,25 +759,128 @@ export default function Home() {
     // This effect creates a hidden clickable element that the header can trigger
     const handler = document.createElement('a');
     handler.id = 'summary-link-handler';
-    handler.style.display = 'none';
-    handler.addEventListener('click', () => setSummaryView(true));
+    handler.addEventListener('click', () => state.setSummaryView(true));
     document.body.appendChild(handler);
 
     return () => {
         document.body.removeChild(handler);
     };
-  }, []);
+  }, [state.setSummaryView]);
+
+  useEffect(() => {
+    const handleSummaryEvent = () => {
+      state.setSummaryView(true);
+      state.setShowDashboard(false);
+    };
+
+    const handleDashboardEvent = () => {
+      if (isAdmin) {
+        setCurrentView('dashboard');
+      } else {
+        state.setShowDashboard(true);
+        state.setSummaryView(false);
+      }
+    };
+
+    const handleHomeEvent = () => {
+      setCurrentView('home');
+      state.setShowDashboard(false);
+      state.setSummaryView(false);
+    };
+
+    const handleCallingTrackerEvent = () => {
+      setCurrentView('calling-tracker');
+      state.setShowDashboard(false);
+      state.setSummaryView(false);
+    };
+
+    window.addEventListener('showSummary', handleSummaryEvent);
+    window.addEventListener('showDashboard', handleDashboardEvent);
+    window.addEventListener('showHome', handleHomeEvent);
+    window.addEventListener('showCallingTracker', handleCallingTrackerEvent);
+    
+    return () => {
+      window.removeEventListener('showSummary', handleSummaryEvent);
+      window.removeEventListener('showDashboard', handleDashboardEvent);
+      window.removeEventListener('showHome', handleHomeEvent);
+      window.removeEventListener('showCallingTracker', handleCallingTrackerEvent);
+    };
+  }, [state.setSummaryView, state.setShowDashboard]);
+
+  // Fetch tracking totals when Dashboard is shown
+  useEffect(() => {
+    const fetchTracking = async () => {
+      try {
+        if (user && state.showDashboard) {
+          const res = await fetch(`/api/tracking?userId=${encodeURIComponent(user.id)}`);
+          if (res.ok) {
+            const json = await res.json();
+            setTracking(json);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch tracking overview', e);
+      }
+    };
+    fetchTracking();
+  }, [state.showDashboard, user]);
+
+  // Admin: fetch all users, activities, and tracking totals; poll for realtime updates
+  useEffect(() => {
+    let interval: any;
+    const fetchAdmin = async () => {
+      try {
+        if (isAdmin && state.showDashboard) {
+          const [usersRes, actRes, trackRes] = await Promise.all([
+            fetch('/api/users'),
+            fetch('/api/activity'),
+            fetch('/api/tracking'),
+          ]);
+          if (usersRes.ok) setAdminUsers(await usersRes.json());
+          if (actRes.ok) setAdminActivities(await actRes.json());
+          if (trackRes.ok) {
+            const t = await trackRes.json();
+            setAdminTotals(t?.totals || null);
+            setAdminCohortDist(t?.remarksByCohort || {});
+            setAdminRecentRemarks((t?.recent && t.recent.remarks) ? t.recent.remarks : []);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch admin data', e);
+      }
+    };
+    fetchAdmin();
+    if (isAdmin && state.showDashboard) {
+      interval = setInterval(fetchAdmin, 5000);
+      window.addEventListener('storageUpdated', fetchAdmin as any);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+      window.removeEventListener('storageUpdated', fetchAdmin as any);
+    };
+  }, [isAdmin, state.showDashboard]);
+
+    // Keep authentication state in sync with auth context
+    useEffect(() => {
+      if (user) {
+        state.setIsAuthenticated(true);
+      } else {
+        state.setIsAuthenticated(false);
+      }
+    }, [user, state]);
 
   const renderUploadState = () => {
-    switch (uploadState) {
+    switch (state.uploadState) {
+      case "idle":
+        return null;
       case "validating":
         return <div className="flex items-center text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Validating...</div>;
       case "error":
-        return <Alert variant="destructive"><XCircle className="h-4 w-4" /><AlertTitle>Validation Failed</AlertTitle><AlertDescription>{errorMessage}</AlertDescription></Alert>;
+        return <Alert variant="destructive"><XCircle className="h-4 w-4" /><AlertTitle>Validation Failed</AlertTitle><AlertDescription>{state.errorMessage}</AlertDescription></Alert>;
       case "success":
         return (
           <div className="flex justify-between items-center">
-            <Alert className="flex-grow"><CheckCircle2 className="h-4 w-4 text-green-500" /><AlertTitle>Upload Successful</AlertTitle><AlertDescription>{fileName}</AlertDescription></Alert>
+            <Alert className="flex-grow"><CheckCircle2 className="h-4 w-4 text-green-500" /><AlertTitle>Upload Successful</AlertTitle><AlertDescription>{state.fileName}</AlertDescription></Alert>
             <Button variant="outline" onClick={handleClear} className="ml-4">
               <RotateCcw className="mr-2 h-4 w-4" /> Upload New File
             </Button>
@@ -559,48 +891,244 @@ export default function Home() {
     }
   };
   
-  const showProcessingUI = uploadState === 'success' && learnerData.length > 0;
+  const showProcessingUI = state.uploadState === 'success' && state.learnerData.length > 0;
 
   const currentStep = useMemo(() => {
-    if (uploadState !== 'success') return 1;
-    if (selectedCohorts.length === 0) return 2;
-    if (isSummaryView) return 3;
-    if (isReportGenerated) return 5;
+    if (state.uploadState !== 'success') return 1;
+    if (state.selectedCohorts.length === 0) return 2;
+    if (state.isSummaryView) return 3;
+    if (state.isReportGenerated) return 5;
     // Step 4 is active when cohorts are selected, user is not in summary view, and report is not generated.
-    if (selectedCohorts.length > 0 && !isSummaryView && !isReportGenerated) return 4;
+    if (state.selectedCohorts.length > 0 && !state.isSummaryView && !state.isReportGenerated) return 4;
     return 1; // Default
-  }, [uploadState, selectedCohorts, isSummaryView, isReportGenerated]);
+  }, [state.uploadState, state.selectedCohorts, state.isSummaryView, state.isReportGenerated]);
   
-  const mainContent = (
+
+
+const mainContent = (
     <>
-      {!showProcessingUI && (
-        <Card className="max-w-3xl mx-auto">
-          <CardHeader className="text-center">
-            <CardTitle>Upload Learner Data</CardTitle>
-            <CardDescription>Upload a CSV file with learner information to begin.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <label htmlFor="csvFile" className="cursor-pointer">
-                <div
-                  onDrop={handleDrop} onDragOver={handleDragOver} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave}
-                  className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg transition-colors ${isDragging ? 'border-primary bg-accent/20' : 'border-border hover:border-primary/50'}`}
-                >
-                  <div className="text-center">
-                    <IconUpload className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      <span className="font-semibold text-primary">Click to upload</span> or drag and drop
-                    </p>
-                    <p className="text-xs text-muted-foreground">CSV file up to 10MB</p>
-                  </div>
-                  <Input id="csvFile" type="file" accept=".csv" onChange={onFileChange} className="sr-only" />
+      {user && state.showDashboard && (
+        <>
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Your Dashboard</CardTitle>
+              <CardDescription>Track your activities, uploads, and interactions with learners</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UserDashboard userEmail={user.id} />
+            </CardContent>
+          </Card>
+
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Selected Account</CardTitle>
+              <CardDescription>Per-account insights and controls</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="p-4 rounded border">
+                  <div className="text-sm text-muted-foreground">Activity Count</div>
+                  <div className="text-2xl font-bold">{adminActivities.filter((a: any) => !adminSelectedUserId || a.userId === adminSelectedUserId).length}</div>
                 </div>
-              </label>
-              <p className="text-sm text-muted-foreground">The app will automatically read data from the uploaded CSV file.</p>
-            </div>
-          </CardContent>
-        </Card>
+                <div className="p-4 rounded border">
+                  <div className="text-sm text-muted-foreground">Remarks Count</div>
+                  <div className="text-2xl font-bold">{adminRecentRemarks.filter((r: any) => !adminSelectedUserId || r.userId === adminSelectedUserId).length}</div>
+                </div>
+                <div className="p-4 rounded border">
+                  <div className="text-sm text-muted-foreground">Last Login</div>
+                  <div className="text-sm">
+                    {(() => {
+                      const last = [...adminActivities]
+                        .filter((a: any) => (!adminSelectedUserId || a.userId === adminSelectedUserId) && a.activity === 'User Login')
+                        .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+                      return last ? `${last.date} ${last.time}` : '—';
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-medium mb-2">Recent Remarks</h4>
+                <div className="space-y-2">
+                  {adminRecentRemarks
+                    .filter((r: any) => !adminSelectedUserId || r.userId === adminSelectedUserId)
+                    .slice(0, 10)
+                    .map((r: any) => (
+                      <div key={r.id} className="flex items-center justify-between border rounded p-2">
+                        <div className="text-sm">
+                          <div className="font-medium">{r.learnerEmail} • {r.learnerCohort || '—'}</div>
+                          <div className="text-muted-foreground text-xs">{new Date(r.remarkDate).toLocaleString()}</div>
+                          <div className="text-xs mt-1">{r.remark}</div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={async () => {
+                            try {
+                              await fetch(`/api/tracking?remarkId=${encodeURIComponent(r.id)}`, { method: 'DELETE' });
+                              // Refresh admin data
+                              const res = await fetch('/api/tracking');
+                              if (res.ok) {
+                                const t = await res.json();
+                                setAdminRecentRemarks((t?.recent && t.recent.remarks) ? t.recent.remarks : []);
+                                setAdminCohortDist(t?.remarksByCohort || {});
+                                setAdminTotals(t?.totals || null);
+                              }
+                            } catch (e) {
+                              console.error(e);
+                            }
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Data Management</CardTitle>
+              <CardDescription>Clear local/session data or server JSON records for this account</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    try {
+                      const uid = user.id;
+                      const acts = JSON.parse(localStorage.getItem('user_activity') || '[]').filter((a: any) => a.userId !== uid);
+                      localStorage.setItem('user_activity', JSON.stringify(acts));
+                      const ups = JSON.parse(localStorage.getItem('csv_uploads') || '[]').filter((u: any) => u.userId !== uid);
+                      localStorage.setItem('csv_uploads', JSON.stringify(ups));
+                      const rems = JSON.parse(localStorage.getItem('user_remarks') || '[]').filter((r: any) => r.userId !== uid);
+                      localStorage.setItem('user_remarks', JSON.stringify(rems));
+                      window.dispatchEvent(new CustomEvent('storageUpdated'));
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }}
+                >
+                  Clear Local Data
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      const uid = user.id;
+                      await fetch(`/api/activity?userId=${encodeURIComponent(uid)}`, { method: 'DELETE' });
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }}
+                >
+                  Clear Server Activity (JSON)
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={async () => {
+                    try {
+                      const uid = user.id;
+                      await fetch(`/api/users?id=${encodeURIComponent(uid)}`, { method: 'DELETE' });
+                    } catch (e) {
+                      console.error(e);
+                    }
+                  }}
+                >
+                  Remove User from users.json
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Learner History removed for regular users as requested */}
+        </>
       )}
+
+      {!showProcessingUI && (() => {
+        // Check for existing user data (client-only)
+        let uploads: any[] = [];
+        let activities: any[] = [];
+        if (typeof window !== 'undefined') {
+          try { uploads = JSON.parse(localStorage.getItem('csv_uploads') || '[]'); } catch {}
+          try { activities = JSON.parse(localStorage.getItem('user_activity') || '[]'); } catch {}
+        }
+        const hasExistingData = uploads.length > 0 || activities.length > 0;
+        
+        if (!hasExistingData) {
+          return (
+            <Card className="max-w-3xl mx-auto">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl">Welcome to the Calling Tracker</CardTitle>
+                <CardDescription className="mt-2">
+                  You have not uploaded any CSV files yet. Get started by uploading your first learner data file.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <label htmlFor="csvFile" className="cursor-pointer">
+                    <div
+                      onDrop={handleDrop} onDragOver={handleDragOver} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave}
+                      className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg transition-colors ${state.isDragging ? 'border-primary bg-accent/20' : 'border-border hover:border-primary/50'}`}
+                    >
+                      <div className="text-center">
+                        <IconUpload className="mx-auto h-12 w-12 text-muted-foreground" />
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-muted-foreground">CSV file up to 10MB</p>
+                      </div>
+                      <Input id="csvFile" type="file" accept=".csv" onChange={onFileChange} className="sr-only" />
+                    </div>
+                  </label>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        }
+        
+        return (
+          <>
+            <Card className="max-w-3xl mx-auto">
+              <CardHeader className="text-center">
+                <CardTitle>Upload New Data</CardTitle>
+                <CardDescription>Upload another CSV file with learner information or view existing data.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <label htmlFor="csvFile" className="cursor-pointer">
+                    <div
+                      onDrop={handleDrop} onDragOver={handleDragOver} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave}
+                      className={`relative flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg transition-colors ${state.isDragging ? 'border-primary bg-accent/20' : 'border-border hover:border-primary/50'}`}
+                    >
+                      <div className="text-center">
+                        <IconUpload className="mx-auto h-12 w-12 text-muted-foreground" />
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          <span className="font-semibold text-primary">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-muted-foreground">CSV file up to 10MB</p>
+                      </div>
+                      <Input id="csvFile" type="file" accept=".csv" onChange={onFileChange} className="sr-only" />
+                    </div>
+                  </label>
+                  <p className="text-sm text-muted-foreground">The app will automatically read data from the uploaded CSV file.</p>
+                </div>
+              </CardContent>
+            </Card>
+            <div className="mt-6">
+              <Button 
+                variant="outline" 
+                onClick={() => state.setShowDashboard(true)}
+                className="mx-auto block"
+              >
+                View Previous Uploads & Activity
+              </Button>
+            </div>
+          </>
+        );
+      })()}
 
       <div className="space-y-4">
         {renderUploadState()}
@@ -619,14 +1147,14 @@ export default function Home() {
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                        {(Object.keys(colIndices) as Array<keyof typeof colIndices>).map((key) => (
+                        {(Object.keys(state.colIndices) as Array<keyof typeof INITIAL_COL_INDICES>).map((key) => (
                             <div key={key} className="flex flex-col gap-2">
                                 <Label htmlFor={`col-${key}`} className="text-sm font-medium capitalize text-muted-foreground">
                                     {key.replace('_', ' ').toLowerCase()}
                                 </Label>
                                 <Input
                                     id={`col-${key}`}
-                                    defaultValue={indexToColumn(colIndices[key])}
+                                    defaultValue={indexToColumn(state.colIndices[key])}
                                     onBlur={(e) => handleColIndexChange(key, e.target.value)}
                                     onKeyDown={(e) => { if (e.key === 'Enter') handleColIndexChange(key, e.currentTarget.value) }}
                                     className="w-24 font-mono"
@@ -641,9 +1169,9 @@ export default function Home() {
             <CardHeader><CardTitle>Select Cohorts</CardTitle><CardDescription>Choose one or more cohorts to generate a report for.</CardDescription></CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {uniqueCohorts.map((cohort) => (
+                {state.uniqueCohorts.map((cohort) => (
                   <div key={cohort} className="flex items-center space-x-2 p-3 rounded-md border">
-                    <Checkbox id={cohort} checked={selectedCohorts.includes(cohort)} onCheckedChange={() => handleCohortSelection(cohort)} />
+                    <Checkbox id={cohort} checked={state.selectedCohorts.includes(cohort)} onCheckedChange={() => handleCohortSelection(cohort)} />
                     <label htmlFor={cohort} className="text-sm font-medium leading-none">{cohort}</label>
                   </div>
                 ))}
@@ -651,7 +1179,7 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          {selectedCohorts.length > 0 && (
+          {state.selectedCohorts.length > 0 && (
             <>
               <div className="grid md:grid-cols-3 gap-8">
                 <Card className="md:col-span-1">
@@ -710,8 +1238,8 @@ export default function Home() {
                   <CardHeader><CardTitle>Generate Report</CardTitle><CardDescription>Your report is ready. You can download it as a CSV or send it via email.</CardDescription></CardHeader>
                   <CardContent className="flex flex-col gap-4 items-center">
                       <Button onClick={handleDownload} variant="outline" className="w-full"><Download /> Download Report</Button>
-                      <Button onClick={() => setEmailDialogOpen(true)} className="w-full" disabled={isSendingEmail}>
-                          {isSendingEmail ? <Loader2 className="animate-spin" /> : <Mail />} Email Report
+            <Button onClick={() => state.setEmailDialogOpen(true)} className="w-full" disabled={state.isSendingEmail}>
+              {state.isSendingEmail ? <Loader2 className="animate-spin" /> : <Mail />} Email Report
                       </Button>
                   </CardContent>
               </Card>
@@ -722,101 +1250,436 @@ export default function Home() {
     </>
   );
 
-  const summaryViewContent = (
-     <Card>
-        <CardHeader>
-            <div className="flex justify-between items-center">
-                <div>
-                    <CardTitle>Submission Summary</CardTitle>
-                    <CardDescription>Overview of submission statuses for all learners in selected cohorts.</CardDescription>
+  const adminDashboardContent = (
+    <>
+      {user && (
+        <>
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Admin Console</CardTitle>
+              <CardDescription>Platform-wide overview and controls</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="p-4 rounded-md border">
+                  <div className="text-sm text-muted-foreground">Total Users</div>
+                  <div className="text-2xl font-bold">{adminUsers.length}</div>
                 </div>
-                <Button variant="outline" onClick={() => setSummaryView(false)}>Back to Main</Button>
-            </div>
-        </CardHeader>
-        <CardContent>
-        {selectedCohorts.length > 0 ? (
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                <Pie data={submissionSummary} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} labelLine={false} label>
-                    {submissionSummary.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                    ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'rgba(50, 50, 50, 0.7)',
-                    backdropFilter: 'blur(5px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: 'white',
+                <div className="p-4 rounded-md border">
+                  <div className="text-sm text-muted-foreground">Total Activities</div>
+                  <div className="text-2xl font-bold">{adminActivities.length}</div>
+                </div>
+                <div className="p-4 rounded-md border">
+                  <div className="text-sm text-muted-foreground">Total Remarks</div>
+                  <div className="text-2xl font-bold">{adminActivities.filter((a: any) => a.activity === 'Remark Added').length}</div>
+                </div>
+                <div className="p-4 rounded-md border">
+                  <div className="text-sm text-muted-foreground">Learners Tracked</div>
+                  <div className="text-2xl font-bold">{adminTotals?.learnersTracked ?? '-'}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Global Activity Timeline</CardTitle>
+              <CardDescription>Newest activity first; auto-refreshing every 5s</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                <Input
+                  placeholder="Filter by learner email or user id"
+                  value={adminFilter}
+                  onChange={(e) => {
+                    setAdminFilter(e.target.value);
+                    setTimelinePage(1);
                   }}
                 />
-                <Legend />
-                </PieChart>
-            </ResponsiveContainer>
-            <div className="space-y-4">
-                <h3 className="text-lg font-medium text-center md:text-left">Detailed Breakdown</h3>
-                <div className="p-4 rounded-lg bg-muted/50 space-y-3">
-                    <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Total Learners Selected</span>
-                        <span className="font-bold text-xl">{filteredData.length}</span>
-                    </div>
-                    <hr className="border-border/50" />
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                           <CheckCircle className="text-green-500" />
-                           <span>Submitted</span>
-                        </div>
-                        <span className="font-semibold">{submissionSummary.find(s => s.name === 'Submitted')?.value || 0} ({filteredData.length > 0 ? ((submissionSummary.find(s => s.name === 'Submitted')?.value || 0) / filteredData.length * 100).toFixed(1) : 0}%)</span>
-                    </div>
-                     <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                           <XCircle className="text-red-500" />
-                           <span>Not Submitted</span>
-                        </div>
-                        <span className="font-semibold">{submissionSummary.find(s => s.name === 'Not Submitted')?.value || 0} ({filteredData.length > 0 ? ((submissionSummary.find(s => s.name === 'Not Submitted')?.value || 0) / filteredData.length * 100).toFixed(1) : 0}%)</span>
-                    </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm">From</Label>
+                  <Input
+                    type="date"
+                    value={adminStartDate}
+                    onChange={(e) => {
+                      setAdminStartDate(e.target.value);
+                      setTimelinePage(1);
+                    }}
+                  />
                 </div>
-            </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm">To</Label>
+                  <Input
+                    type="date"
+                    value={adminEndDate}
+                    onChange={(e) => {
+                      setAdminEndDate(e.target.value);
+                      setTimelinePage(1);
+                    }}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm">Account</Label>
+                  <select
+                    className="border rounded px-2 py-2 bg-background"
+                    value={adminSelectedUserId}
+                    onChange={(e) => {
+                      setAdminSelectedUserId(e.target.value);
+                      setTimelinePage(1);
+                    }}
+                  >
+                    <option value="">All</option>
+                    {adminUsers.map((u: any) => (
+                      <option key={u.id} value={u.id}>{u.name || u.email || u.id}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
+                {[...adminActivities]
+                  .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+                  .slice(0, timelinePage * TIMELINE_PAGE_SIZE)
+                  .filter((a: any) => {
+                    if (!adminFilter) return true;
+                    const f = adminFilter.toLowerCase();
+                    const val = (a.details?.learnerEmail || a.details?.email || a.userId || '').toLowerCase();
+                    return val.includes(f);
+                  })
+                  .filter((a: any) => {
+                    if (!adminStartDate && !adminEndDate && !adminSelectedUserId) return true;
+                    const ts = new Date(a.timestamp);
+                    let ok = true;
+                    if (adminStartDate) ok = ok && (ts >= new Date(adminStartDate + 'T00:00:00'));
+                    if (adminEndDate) ok = ok && (ts <= new Date(adminEndDate + 'T23:59:59'));
+                    if (adminSelectedUserId) ok = ok && (a.userId === adminSelectedUserId);
+                    return ok;
+                  })
+                  .map((activity: any) => (
+                    <div key={activity.id} className="flex items-start gap-3 border-b pb-3">
+                      <div className="text-xs text-muted-foreground min-w-[140px]">
+                        {activity.date} {activity.time}
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">{activity.activity}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {activity.details?.filename || activity.details?.learnerEmail || activity.details?.email || ''}
+                        </div>
+                      </div>
+                      <div className="text-xs text-muted-foreground">{activity.userId}</div>
+                    </div>
+                  ))}
+                {timelinePage * TIMELINE_PAGE_SIZE < adminActivities.length && (
+                  <div className="text-center pt-2">
+                    <Button variant="outline" onClick={() => setTimelinePage(timelinePage + 1)}>Load More</Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Cohort Distribution</CardTitle>
+              <CardDescription>Remarks by cohort (from tracking.json)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {Object.keys(adminCohortDist).length === 0 ? (
+                <div className="text-sm text-muted-foreground">No cohort data yet</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <ResponsiveContainer width="100%" height={260}>
+                    <PieChart>
+                      <Pie data={Object.entries(adminCohortDist).map(([name, value]) => ({ name, value }))} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={90} label>
+                        {Object.entries(adminCohortDist).map((_, idx) => (
+                          <Cell key={idx} fill={["hsl(var(--chart-1))","hsl(var(--chart-2))","hsl(var(--chart-3))","hsl(var(--chart-4))","hsl(var(--chart-5))"][idx % 5]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="space-y-2">
+                    {Object.entries(adminCohortDist).map(([cohort, count]) => (
+                      <div key={cohort} className="flex justify-between border p-2 rounded">
+                        <span className="text-sm">{cohort}</span>
+                        <span className="font-medium">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Users</CardTitle>
+              <CardDescription>Manage platform users (admin cannot be deleted)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left">
+                      <th className="py-2 pr-4">Name</th>
+                      <th className="py-2 pr-4">Email</th>
+                      <th className="py-2 pr-4">Activity</th>
+                      <th className="py-2 pr-4">Remarks</th>
+                      <th className="py-2 pr-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {adminUsers.map((u: any) => {
+                      const activityCount = adminActivities.filter((a: any) => a.userId === u.id).length;
+                      const remarkCount = adminActivities.filter((a: any) => a.userId === u.id && a.activity === 'Remark Added').length;
+                      const disabled = u.id === 'admin';
+                      return (
+                        <tr key={u.id} className="border-t">
+                          <td className="py-2 pr-4">{u.name || u.email || u.id}</td>
+                          <td className="py-2 pr-4">{u.email}</td>
+                          <td className="py-2 pr-4">{activityCount}</td>
+                          <td className="py-2 pr-4">{remarkCount}</td>
+                          <td className="py-2 pr-4">
+                            <button
+                              className={`text-red-600 disabled:opacity-50`}
+                              disabled={disabled}
+                              onClick={async () => {
+                                if (!window.confirm(`Delete user ${u.email}? This will also clear their server activities.`)) return;
+                                try {
+                                  await fetch(`/api/users?id=${encodeURIComponent(u.id)}`, { method: 'DELETE' });
+                                  await fetch(`/api/activity?userId=${encodeURIComponent(u.id)}`, { method: 'DELETE' });
+                                } catch (e) {
+                                  console.error(e);
+                                }
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </>
+  );
+
+  const dashboardContent = (
+    <>
+      {user && (
+        <>
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Your Dashboard</CardTitle>
+              <CardDescription>Track your activities, uploads, and interactions with learners</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UserDashboard userEmail={user.id} />
+            </CardContent>
+          </Card>
+
+          {/* Tracking overview sourced from data/tracking.json via /api/tracking */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Tracking Overview</CardTitle>
+              <CardDescription>Server totals from tracking.json (uploads, remarks, learners)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 rounded-md border">
+                  <div className="text-sm text-muted-foreground">Uploads</div>
+                  <div className="text-2xl font-bold">{tracking?.totals?.uploads ?? '-'}</div>
+                </div>
+                <div className="p-4 rounded-md border">
+                  <div className="text-sm text-muted-foreground">Remarks</div>
+                  <div className="text-2xl font-bold">{tracking?.totals?.remarks ?? '-'}</div>
+                </div>
+                <div className="p-4 rounded-md border">
+                  <div className="text-sm text-muted-foreground">Learners Tracked</div>
+                  <div className="text-2xl font-bold">{tracking?.totals?.learnersTracked ?? '-'}</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+        </>
+      )}
+    </>
+  );
+
+  // Login component for unauthenticated users
+  const loginContent = (
+    <div className="flex items-center justify-center min-h-[60vh]">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Welcome to Calling Tracker</CardTitle>
+          <CardDescription>
+            Please log in to access the learner submission and remarks portal
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col space-y-3">
+            <Button asChild className="w-full">
+              <Link href="/login">Log In</Link>
+            </Button>
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/signup">Create Account</Link>
+            </Button>
           </div>
-        ) : (
-            <div className="text-center py-10 text-muted-foreground">Please select at least one cohort to see the summary.</div>
-        )}
         </CardContent>
+        <CardFooter className="text-center">
+          <p className="text-sm text-muted-foreground">
+            Secure access to manage learner data and generate reports
+          </p>
+        </CardFooter>
       </Card>
-  )
+    </div>
+  );
+
+  // Duplicate `summaryViewContent` removed here; the first definition earlier in the file is the one used.
+
+  // Early return for loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // Redirect to landing page if user is not authenticated
+  if (!user) {
+    router.push('/landing');
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <main className="flex-grow container mx-auto p-4 md:p-8 space-y-8">
-        <div className="text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground">Learner Submission & Remarks Portal</h1>
-          <p className="mt-2 text-lg text-muted-foreground max-w-3xl mx-auto">
-            A streamlined tool to process learner CSV files, review submissions, and generate professional reports.
-          </p>
-        </div>
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-black via-gray-900 to-black relative">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,69,19,0.1),transparent_50%)] pointer-events-none"></div>
+      <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(139,69,19,0.03)_25%,rgba(139,69,19,0.03)_50%,transparent_50%,transparent_75%,rgba(139,69,19,0.03)_75%)] bg-[length:20px_20px] pointer-events-none"></div>
+      <main className="flex-grow container mx-auto p-4 md:p-8 space-y-8 relative z-10">
+        {/* Content without duplicate header */}
 
-        <Stepper steps={STEPS} currentStep={currentStep} />
-        
-        {isSummaryView ? summaryViewContent : mainContent}
+        {/* Render content based on current view */}
+        {(() => {
+          // Handle different views
+          switch (currentView) {
+            case 'home':
+              // Admin gets admin dashboard as home
+              if (isAdmin) {
+                return <AdminDashboard />;
+              }
+              // Regular users get the normal home workflow
+              return (
+                <>
+                  {!state.showDashboard && (
+                    <Stepper steps={STEPS} currentStep={currentStep} />
+                  )}
+                  {state.showDashboard ? dashboardContent : (state.isSummaryView ? summaryViewContent : mainContent)}
+                </>
+              );
+            case 'dashboard':
+              // Only for regular users (admin doesn't have dashboard in nav)
+              return (
+                <Card className="mb-8">
+                  <CardHeader>
+                    <CardTitle>Your Dashboard</CardTitle>
+                    <CardDescription>Track your activities, uploads, and interactions with learners</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <UserDashboard userEmail={user.id} />
+                  </CardContent>
+                </Card>
+              );
+            case 'calling-tracker':
+              return isAdmin ? <AdminCallingTracker /> : <CallingTracker />;
+            default:
+              // Default view
+              if (isAdmin) {
+                return <AdminDashboard />;
+              }
+              return (
+                <>
+                  {!state.showDashboard && (
+                    <Stepper steps={STEPS} currentStep={currentStep} />
+                  )}
+                  {state.showDashboard ? dashboardContent : (state.isSummaryView ? summaryViewContent : mainContent)}
+                </>
+              );
+          }
+        })()}
       </main>
       
-      {currentLearner && (
+
+      
+      {state.currentLearner && (
         <EditRemarkDialog
-          isOpen={isRemarkDialogOpen}
-          setIsOpen={setRemarkDialogOpen}
-          learner={currentLearner}
-          initialRemark={getRemarkForLearner(currentLearner)}
+          isOpen={state.isRemarkDialogOpen}
+          setIsOpen={state.setRemarkDialogOpen}
+          learner={state.currentLearner}
+          initialRemark={getRemarkForLearner(state.currentLearner)}
           onSave={handleSaveRemark}
         />
       )}
       
       <EmailReportDialog
-        isOpen={isEmailDialogOpen}
-        setIsOpen={setEmailDialogOpen}
+        isOpen={state.isEmailDialogOpen}
+        setIsOpen={state.setEmailDialogOpen}
         onSend={handleEmail}
-        isSending={isSendingEmail}
+        isSending={state.isSendingEmail}
       />
+    </div>
+  );
+}
+
+// Simple ProfileMenu component placed here to avoid importing extra UI primitives.
+function ProfileMenu({ user, onLogout }: { user: any; onLogout: () => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (!ref.current) return;
+      if (ref.current.contains(e.target as Node)) return;
+      setOpen(false);
+    };
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, []);
+
+  const displayName = user?.name || user?.email || 'upGrad01';
+  const initial = (displayName && displayName.charAt(0).toUpperCase()) || 'U';
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        title={displayName}
+        className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent/10 hover:text-accent-foreground rounded-full h-10 w-10 bg-transparent border-0"
+        onClick={() => setOpen(o => !o)}
+        aria-label={`Profile for ${displayName}`}
+      >
+        {/* Transparent circular initial; matches website transparent look */}
+        <span className="h-8 w-8 flex items-center justify-center rounded-full bg-transparent text-sm font-medium text-foreground">{initial}</span>
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-56 bg-white border rounded-md shadow-lg z-40">
+          <div className="px-3 py-3 text-sm">Signed in as <br /><strong>{displayName}</strong></div>
+          <div className="border-t px-2 py-2">
+            <button className="w-full text-left px-2 py-2 hover:bg-gray-50 rounded" onClick={() => { setOpen(false); onLogout(); }}>Logout</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,356 @@
+{
+  "csvUploads": [
+    {
+      "id": "1c6c073f-5bc3-4d02-8784-a02a6f419320",
+      "userId": "1759417452185",
+      "userName": "Test1",
+      "filename": "Testing_Dump - Sheet1.csv",
+      "cohorts": [
+        "5692",
+        "1111",
+        "2222"
+      ],
+      "totalRows": 11,
+      "submittedCount": 5,
+      "notSubmittedCount": 6,
+      "uploadDate": "2025-10-02T16:04:00.542Z"
+    },
+    {
+      "id": "53e7ed58-a689-4f95-a3d9-4c74271c473c",
+      "userId": "1759417452185",
+      "userName": "Test1",
+      "filename": "Testing_Dump - Sheet1.csv",
+      "cohorts": [
+        "5692",
+        "1111",
+        "2222"
+      ],
+      "totalRows": 11,
+      "submittedCount": 5,
+      "notSubmittedCount": 6,
+      "uploadDate": "2025-10-02T15:38:59.688Z"
+    },
+    {
+      "id": "0ac2928b-59ed-432c-ade3-fffc19e39414",
+      "userId": "1759417452185",
+      "userName": "Test1",
+      "filename": "Testing_Dump - Sheet1.csv",
+      "cohorts": [
+        "5692",
+        "1111",
+        "2222"
+      ],
+      "totalRows": 11,
+      "submittedCount": 5,
+      "notSubmittedCount": 6,
+      "uploadDate": "2025-10-02T15:24:14.082Z"
+    },
+    {
+      "id": "d585afb8-a855-4847-876f-4ed0a44a7897",
+      "userId": "1759417452185",
+      "userName": "Test1",
+      "filename": "Testing_Dump - Sheet1.csv",
+      "cohorts": [
+        "5692",
+        "1111",
+        "2222"
+      ],
+      "totalRows": 11,
+      "submittedCount": 5,
+      "notSubmittedCount": 6,
+      "uploadDate": "2025-10-02T15:04:30.314Z"
+    },
+    {
+      "id": "4a8c7129-19af-439f-af8c-e95dde1e2b10",
+      "userId": "1759413577981",
+      "userName": "Omkar",
+      "filename": "Testing_Dump - Sheet1.csv",
+      "cohorts": [
+        "5692",
+        "1111",
+        "2222"
+      ],
+      "totalRows": 11,
+      "submittedCount": 5,
+      "notSubmittedCount": 6,
+      "uploadDate": "2025-10-02T14:00:13.199Z"
+    },
+    {
+      "id": "13f4ff80-d283-4d95-91e9-f1794c956136",
+      "userId": "1759411197662",
+      "userName": "Test",
+      "filename": "Testing_Dump - Sheet1.csv",
+      "cohorts": [
+        "5692",
+        "1111",
+        "2222"
+      ],
+      "totalRows": 11,
+      "submittedCount": 5,
+      "notSubmittedCount": 6,
+      "uploadDate": "2025-10-02T13:20:12.173Z"
+    },
+    {
+      "id": "03150f72-eb43-4093-8bb4-c77f778e0990",
+      "userId": "1759399871632",
+      "userName": "Omkar",
+      "filename": "Testing_Dump - Sheet1.csv",
+      "cohorts": [
+        "5692",
+        "1111",
+        "2222"
+      ],
+      "totalRows": 11,
+      "submittedCount": 5,
+      "notSubmittedCount": 6,
+      "uploadDate": "2025-10-02T12:29:45.457Z"
+    },
+    {
+      "id": "c1f8f8b8-c39a-4b6e-9c1e-2d2b2f8d8b1a",
+      "userId": "u1",
+      "userName": "Test User",
+      "filename": "dummy_data.csv",
+      "uploadDate": "2025-10-02T10:00:00.000Z",
+      "cohorts": [
+        "dummy-cohort"
+      ],
+      "totalRows": 1,
+      "submittedCount": 0,
+      "notSubmittedCount": 1
+    }
+  ],
+  "remarks": [
+    {
+      "id": "9a628e8b-62e6-4fa1-971c-eea4459f4838",
+      "userId": "1759417452185",
+      "userName": "Test1",
+      "learnerEmail": "Adel@mtclearning.org",
+      "learnerCohort": "2222",
+      "remark": "Very Angry",
+      "csvFilename": "Testing_Dump - Sheet1.csv",
+      "remarkDate": "2025-10-02T16:04:16.715Z"
+    },
+    {
+      "id": "f65b6bf1-ff00-4e38-b89c-687b04a9031c",
+      "userId": "1759417452185",
+      "userName": "Test1",
+      "learnerEmail": "Adel@mtclearning.org",
+      "learnerCohort": "2222",
+      "remark": "Dnp",
+      "csvFilename": "Testing_Dump - Sheet1.csv",
+      "remarkDate": "2025-10-02T15:39:11.641Z"
+    },
+    {
+      "id": "3202e261-ffc5-4f55-a42b-8a89a77a53ed",
+      "userId": "1759417452185",
+      "userName": "Test1",
+      "learnerEmail": "estherc.wsg@gmail.com",
+      "learnerCohort": "5692",
+      "remark": "Learner setiment is good",
+      "csvFilename": "Testing_Dump - Sheet1.csv",
+      "remarkDate": "2025-10-02T15:24:33.378Z"
+    },
+    {
+      "id": "d40d6f17-1de0-4fab-81cf-73a9c5c1a7ff",
+      "userId": "1759417452185",
+      "userName": "Test1",
+      "learnerEmail": "estherc.wsg@gmail.com",
+      "learnerCohort": "5692",
+      "remark": "mn",
+      "csvFilename": "Testing_Dump - Sheet1.csv",
+      "remarkDate": "2025-10-02T15:14:35.831Z"
+    },
+    {
+      "id": "90e67a82-ec63-49b9-ab4b-8508e6699fb5",
+      "userId": "1759417452185",
+      "userName": "Test1",
+      "learnerEmail": "ajily@yahoo.com",
+      "learnerCohort": "2222",
+      "remark": "Data",
+      "csvFilename": "Testing_Dump - Sheet1.csv",
+      "remarkDate": "2025-10-02T15:04:37.632Z"
+    },
+    {
+      "id": "e18d462f-15da-4b2d-af42-12cf1a786a9f",
+      "userId": "1759413577981",
+      "userName": "Omkar",
+      "learnerEmail": "xya@gmail.com",
+      "learnerCohort": "1111",
+      "remark": "Add",
+      "csvFilename": "Testing_Dump - Sheet1.csv",
+      "remarkDate": "2025-10-02T14:00:20.156Z"
+    },
+    {
+      "id": "6c0533de-7f0b-4855-95e6-efa2912d7403",
+      "userId": "1759411197662",
+      "userName": "Test",
+      "learnerEmail": "xya@gmail.com",
+      "learnerCohort": "1111",
+      "remark": "Not Picking up the calll",
+      "csvFilename": "Testing_Dump - Sheet1.csv",
+      "remarkDate": "2025-10-02T13:20:28.330Z"
+    },
+    {
+      "id": "r1a9b8c7-d6e5-f4a3-b2c1-d0e9f8d7c6b5",
+      "userId": "u1",
+      "userName": "Test User",
+      "learnerEmail": "learner1@example.com",
+      "learnerCohort": "dummy-cohort",
+      "remark": "This is a test remark.",
+      "remarkDate": "2025-10-02T10:05:00.000Z",
+      "csvFilename": "dummy_data.csv"
+    }
+  ],
+  "learnerDetails": [
+    {
+      "email": "learner1@example.com",
+      "cohort": "dummy-cohort",
+      "submissionStatus": "Not Submitted",
+      "learnerType": "Unknown",
+      "lastRemark": {
+        "remark": "This is a test remark.",
+        "date": "2025-10-02T10:05:00.000Z",
+        "by": "Test User"
+      },
+      "history": [
+        {
+          "date": "2025-10-02T10:05:00.000Z",
+          "action": "Remark Added",
+          "details": "This is a test remark.",
+          "by": "Test User"
+        }
+      ]
+    },
+    {
+      "email": "estherc.wsg@gmail.com",
+      "cohort": "1111",
+      "submissionStatus": "Not Submitted",
+      "learnerType": "Unknown",
+      "lastRemark": {
+        "remark": "Addddded",
+        "date": "2025-10-02T12:30:01.011Z",
+        "by": "Omkar"
+      },
+      "history": [
+        {
+          "date": "2025-10-02T12:30:01.011Z",
+          "action": "Remark Added",
+          "details": "Addddded",
+          "by": "Omkar"
+        },
+        {
+          "date": "2025-10-02T12:29:56.573Z",
+          "action": "Remark Added",
+          "details": "Added",
+          "by": "Omkar"
+        },
+        {
+          "date": "2025-10-02T12:07:35.514Z",
+          "action": "Remark Added",
+          "details": "Make best",
+          "by": "Omkar"
+        }
+      ]
+    },
+    {
+      "email": "xya@gmail.com",
+      "cohort": "1111",
+      "submissionStatus": "Not Submitted",
+      "learnerType": "Unknown",
+      "lastRemark": {
+        "remark": "Add",
+        "date": "2025-10-02T14:00:20.156Z",
+        "by": "Omkar"
+      },
+      "history": [
+        {
+          "date": "2025-10-02T14:00:20.156Z",
+          "action": "Remark Added",
+          "details": "Add",
+          "by": "Omkar"
+        },
+        {
+          "date": "2025-10-02T13:20:28.330Z",
+          "action": "Remark Added",
+          "details": "Not Picking up the calll",
+          "by": "Test"
+        },
+        {
+          "date": "2025-10-02T12:29:52.002Z",
+          "action": "Remark Added",
+          "details": "Added",
+          "by": "Omkar"
+        }
+      ]
+    },
+    {
+      "email": "ajily@yahoo.com",
+      "cohort": "2222",
+      "submissionStatus": "Not Submitted",
+      "learnerType": "Unknown",
+      "lastRemark": {
+        "remark": "Data",
+        "date": "2025-10-02T15:04:37.632Z",
+        "by": "Test1"
+      },
+      "history": [
+        {
+          "date": "2025-10-02T15:04:37.632Z",
+          "action": "Remark Added",
+          "details": "Data",
+          "by": "Test1"
+        }
+      ]
+    },
+    {
+      "email": "estherc.wsg@gmail.com",
+      "cohort": "5692",
+      "submissionStatus": "Not Submitted",
+      "learnerType": "Unknown",
+      "lastRemark": {
+        "remark": "Learner setiment is good",
+        "date": "2025-10-02T15:24:33.378Z",
+        "by": "Test1"
+      },
+      "history": [
+        {
+          "date": "2025-10-02T15:24:33.378Z",
+          "action": "Remark Added",
+          "details": "Learner setiment is good",
+          "by": "Test1"
+        },
+        {
+          "date": "2025-10-02T15:14:35.831Z",
+          "action": "Remark Added",
+          "details": "mn",
+          "by": "Test1"
+        }
+      ]
+    },
+    {
+      "email": "Adel@mtclearning.org",
+      "cohort": "2222",
+      "submissionStatus": "Not Submitted",
+      "learnerType": "Unknown",
+      "lastRemark": {
+        "remark": "Very Angry",
+        "date": "2025-10-02T16:04:16.715Z",
+        "by": "Test1"
+      },
+      "history": [
+        {
+          "date": "2025-10-02T16:04:16.715Z",
+          "action": "Remark Added",
+          "details": "Very Angry",
+          "by": "Test1"
+        },
+        {
+          "date": "2025-10-02T15:39:11.641Z",
+          "action": "Remark Added",
+          "details": "Dnp",
+          "by": "Test1"
+        }
+      ]
+    }
+  ]
+}
