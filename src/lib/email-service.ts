@@ -20,12 +20,20 @@ interface EmailReport {
 
 // Create transporter with SMTP configuration
 function createTransporter() {
+  // Get credentials from environment variables
+  const senderEmail = process.env.SENDER_EMAIL;
+  const appPassword = process.env.APP_PASSWORD;
+  
+  if (!senderEmail || !appPassword) {
+    throw new Error('Missing email credentials. Please set SENDER_EMAIL and APP_PASSWORD in environment variables.');
+  }
+  
   // Gmail configuration as fallback (more reliable)
   const config = {
     service: 'gmail', // Use Gmail service
     auth: {
-      user: 'intlesgcidba@upgrad.com',  // Gmail address
-      pass: 'htmwlfsdhjjmxlls',          // App password
+      user: senderEmail,
+      pass: appPassword,
     },
     debug: true,
     logger: true
@@ -37,8 +45,8 @@ function createTransporter() {
     port: 587,
     secure: false,
     auth: {
-      user: 'intlesgcidba@upgrad.com',
-      pass: 'htmwlfsdhjjmxlls',
+      user: senderEmail,
+      pass: appPassword,
     },
     tls: {
       rejectUnauthorized: false

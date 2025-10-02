@@ -14,6 +14,17 @@ export async function POST(req: NextRequest) {
 
     console.log(`🧪 Testing email send to: ${testEmail}`);
 
+    // Get credentials from environment variables
+    const senderEmail = process.env.SENDER_EMAIL;
+    const appPassword = process.env.APP_PASSWORD;
+    
+    if (!senderEmail || !appPassword) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Missing email credentials. Please set SENDER_EMAIL and APP_PASSWORD in environment variables.' 
+      }, { status: 500 });
+    }
+
     // Try multiple SMTP configurations
     const configs = [
       {
@@ -22,8 +33,8 @@ export async function POST(req: NextRequest) {
         port: 587,
         secure: false,
         auth: {
-          user: 'intlesgcidba@upgrad.com',
-          pass: 'htmwlfsdhjjmxlls',
+          user: senderEmail,
+          pass: appPassword,
         },
         tls: {
           ciphers: 'SSLv3',
@@ -36,8 +47,8 @@ export async function POST(req: NextRequest) {
         port: 587,
         secure: false,
         auth: {
-          user: 'intlesgcidba@upgrad.com',
-          pass: 'htmwlfsdhjjmxlls',
+          user: senderEmail,
+          pass: appPassword,
         },
         tls: {
           rejectUnauthorized: false

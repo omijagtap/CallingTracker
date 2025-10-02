@@ -14,7 +14,7 @@ export async function GET() {
         config: {
           host: 'smtp.office365.com',
           port: 587,
-          user: 'intlesgcidba@upgrad.com'
+          user: process.env.SENDER_EMAIL || 'Email configured via environment variables'
         }
       });
     } else {

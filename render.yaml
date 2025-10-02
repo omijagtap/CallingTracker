@@ -9,7 +9,7 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: SENDER_EMAIL
-        value: intlesgcidba@upgrad.com
-      - key: APP_PASSWORD
-        value: htmwlfsdhjjmxlls
+      # SECURITY: Email credentials should be set in Render dashboard, not in code
+      # Go to Render dashboard > Environment > Add environment variables:
+      # SENDER_EMAIL=your-email@upgrad.com
+      # APP_PASSWORD=your-new-app-password
