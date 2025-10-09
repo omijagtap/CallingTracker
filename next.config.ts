@@ -1,4 +1,5 @@
 import type {NextConfig} from 'next';
+import path from 'path';
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -9,11 +10,23 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   output: 'standalone',
-  webpack: (config: any) => {
+  webpack: (config: any, { buildId, dev, isServer, defaultLoaders, webpack }: any) => {
+    // Enhanced alias resolution
     config.resolve.alias = {
       ...config.resolve.alias,
-      '@': require('path').resolve(__dirname, 'src'),
+      '@': path.resolve(__dirname, 'src'),
+      '@/lib': path.resolve(__dirname, 'src/lib'),
+      '@/components': path.resolve(__dirname, 'src/components'),
+      '@/hooks': path.resolve(__dirname, 'src/hooks'),
+      '@/app': path.resolve(__dirname, 'src/app'),
     };
+    
+    // Ensure proper module resolution
+    config.resolve.modules = [
+      path.resolve(__dirname, 'src'),
+      'node_modules'
+    ];
+    
     return config;
   },
   images: {
