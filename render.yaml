@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: nextn-website
+    name: upgrad-calling-tracker
     env: node
     plan: free
     buildCommand: npm install && npm run build
@@ -9,7 +9,14 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      # SECURITY: Email credentials should be set in Render dashboard, not in code
-      # Go to Render dashboard > Environment > Add environment variables:
-      # SENDER_EMAIL=your-email@upgrad.com
-      # APP_PASSWORD=your-new-app-password
+      # SECURITY: All sensitive credentials should be set in Render dashboard
+      # Required environment variables (set these in Render dashboard):
+      # NEXT_PUBLIC_SUPABASE_URL=https://mkmuhctmddhttosgcpmo.supabase.co
+      # NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+      # SMTP_HOST=smtp.office365.com
+      # SMTP_PORT=587
+      # SMTP_USER=intlesgcidba@upgrad.com
+      # SMTP_PASS=htmwlfsdhjjmxlls
+      # ADMIN_USERNAME=Air01
+      # ADMIN_PASSWORD=Omkar@123
+      # NEXTAUTH_SECRET=upgrad-calling-tracker-secret-key-2024
