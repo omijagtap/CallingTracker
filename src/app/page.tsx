@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useMemo, useCallback, useState, useRef } from "react";
@@ -8,9 +7,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useHomeState } from "@/hooks/use-home-state";
 // Removed LearnerHistory import for admin-only redesign
 import { UserDashboard } from "@/components/app/user-dashboard";
+import { BadgeModal } from '@/components/app/badge-modal';
+import { AppHeader } from "@/components/app/header";
 import { AdminDashboard } from "@/components/app/admin-dashboard";
 import { CallingTracker } from "@/components/app/calling-tracker";
 import { AdminCallingTracker } from "@/components/app/admin-calling-tracker";
+import { UserRankings } from "@/components/app/user-rankings";
+import { UserProfile } from "@/components/app/user-profile";
+import { UserBadges } from "@/components/app/user-badges";
 import {
   Card,
   CardContent,
@@ -51,7 +55,7 @@ import {
   X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth-context-supabase";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 
@@ -203,15 +207,18 @@ const generateRemarkKey = (learner: LearnerData): string => {
 export default function Home() {
   const state = useHomeState();
 
-
   const { toast } = useToast();
   const { user, loading, logout, isAdmin } = useAuth();
   const router = useRouter();
+
+  // ALL HOOKS MUST BE AT THE TOP - NEVER AFTER CONDITIONAL RETURNS
   const [tracking, setTracking] = useState<{ totals?: { uploads: number; remarks: number; learnersTracked: number }, recent?: any } | null>(null);
   const [adminUsers, setAdminUsers] = useState<any[]>([]);
   const [adminActivities, setAdminActivities] = useState<any[]>([]);
   const [adminTotals, setAdminTotals] = useState<{ uploads: number; remarks: number; learnersTracked: number } | null>(null);
   const [adminCohortDist, setAdminCohortDist] = useState<Record<string, number>>({});
+  const [currentView, setCurrentView] = useState<'home' | 'dashboard' | 'calling-tracker' | 'rankings' | 'profile'>('home');
+  const [learnerSearchQuery, setLearnerSearchQuery] = useState<string>("");
   const [adminFilter, setAdminFilter] = useState<string>("");
   const [adminStartDate, setAdminStartDate] = useState<string>("");
   const [adminEndDate, setAdminEndDate] = useState<string>("");
@@ -219,14 +226,14 @@ export default function Home() {
   const [adminRecentRemarks, setAdminRecentRemarks] = useState<any[]>([]);
   const [timelinePage, setTimelinePage] = useState<number>(1);
   const TIMELINE_PAGE_SIZE = 9;
-  const [currentView, setCurrentView] = useState<'home' | 'dashboard' | 'calling-tracker'>('home');
-  // profile menu removed per request
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
+  
+  // Form hook
   const { register, handleSubmit, setValue, reset } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
   });
-  
-  const { setUploadState, setErrorMessage, setLearnerData, setUniqueCohorts, setSelectedCohorts, setRemarks } = state;
 
+  // ALL CALLBACKS MUST BE AT THE TOP TOO
   const processCsvData = useCallback((content: string, indices: typeof INITIAL_COL_INDICES) => {
     const { data, error } = parseCsvContent(content, indices);
 
@@ -241,15 +248,24 @@ export default function Home() {
     }
     
     const cohorts = [...new Set(data.map((row) => row.Cohort || "N/A"))].filter(Boolean) as string[];
-    
+    const uniqueLearners = data.length;
+
+    state.setUploadState("success");
     state.setLearnerData(data);
     state.setUniqueCohorts(cohorts);
-    state.setUploadState("success");
-    state.setErrorMessage(null);
-    // Reset selections when data is re-processed
-    state.setSelectedCohorts([]);
+    state.setSelectedCohorts(cohorts);
     state.setRemarks([]);
-  }, [setUploadState, setErrorMessage, setLearnerData, setUniqueCohorts, setSelectedCohorts, setRemarks]);
+
+    console.log(`📊 Processed ${uniqueLearners} learners across ${cohorts.length} cohorts`);
+  }, [state]);
+
+  // ALL USEEFFECT HOOKS MUST BE AT THE TOP
+  // Redirect logic: if not logged in, go to landing page
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/landing');
+    }
+  }, [user, loading, router]);
 
   // Load state from localStorage on initial render
   useEffect(() => {
@@ -265,15 +281,15 @@ export default function Home() {
         state.setSelectedCohorts(parsedState.selectedCohorts || []);
         state.setRemarks(parsedState.remarks || []);
         state.setColIndices(parsedState.colIndices || INITIAL_COL_INDICES);
-        
-        if (parsedState.csvContent) {
-            processCsvData(parsedState.csvContent, parsedState.colIndices || INITIAL_COL_INDICES);
-        }
+        state.setReportGenerated(parsedState.reportGenerated || false);
+        // Don't reprocess CSV data if it's already loaded
+        // The data is already in parsedState.learnerData
       }
     } catch (error) {
-      console.error("Failed to load state from localStorage", error);
+      console.error('Error loading saved state:', error);
     }
-  }, [processCsvData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
@@ -286,15 +302,165 @@ export default function Home() {
       selectedCohorts: state.selectedCohorts,
       remarks: state.remarks,
       colIndices: state.colIndices,
+      reportGenerated: state.isReportGenerated,
     };
-    try {
-        if (state.uploadState !== 'idle') {
-            localStorage.setItem('appState', JSON.stringify(appState));
+    localStorage.setItem('appState', JSON.stringify(appState));
+  }, [state.uploadState, state.fileName, state.csvContent, state.learnerData, state.uniqueCohorts, state.selectedCohorts, state.remarks, state.colIndices, state.isReportGenerated]);
+
+  // Header event listeners
+  useEffect(() => {
+    const handler = document.createElement('a');
+    handler.id = 'summary-link-handler';
+    handler.style.display = 'none';
+    document.body.appendChild(handler);
+    return () => {
+      if (document.getElementById('summary-link-handler')) {
+        document.body.removeChild(handler);
+      }
+    };
+  }, [state.setSummaryView]);
+
+  useEffect(() => {
+    const handleSummaryEvent = () => {
+      state.setSummaryView(true);
+      state.setShowDashboard(false);
+    };
+    const handleDashboardEvent = () => {
+      state.setShowDashboard(true);
+      state.setSummaryView(false);
+    };
+    const handleHomeEvent = () => {
+      state.setSummaryView(false);
+      state.setShowDashboard(false);
+      setCurrentView('home');
+    };
+    const handleCallingTrackerEvent = () => {
+      state.setSummaryView(false);
+      state.setShowDashboard(false);
+      setCurrentView('calling-tracker');
+    };
+    const handleRankingsEvent = () => {
+      state.setSummaryView(false);
+      state.setShowDashboard(false);
+      setCurrentView('rankings');
+    };
+    const handleProfileEvent = () => {
+      state.setSummaryView(false);
+      state.setShowDashboard(false);
+      setCurrentView('profile');
+    };
+    window.addEventListener('showSummary', handleSummaryEvent);
+    window.addEventListener('showDashboard', handleDashboardEvent);
+    window.addEventListener('showHome', handleHomeEvent);
+    window.addEventListener('showCallingTracker', handleCallingTrackerEvent);
+    window.addEventListener('showRankings', handleRankingsEvent);
+    window.addEventListener('showProfile', handleProfileEvent);
+    return () => {
+      window.removeEventListener('showSummary', handleSummaryEvent);
+      window.removeEventListener('showDashboard', handleDashboardEvent);
+      window.removeEventListener('showHome', handleHomeEvent);
+      window.removeEventListener('showCallingTracker', handleCallingTrackerEvent);
+      window.removeEventListener('showRankings', handleRankingsEvent);
+      window.removeEventListener('showProfile', handleProfileEvent);
+    };
+  }, [state.setSummaryView, state.setShowDashboard]);
+
+  // Fetch tracking totals when Dashboard is shown
+  useEffect(() => {
+    const fetchTracking = async () => {
+      try {
+        if (user && state.showDashboard) {
+          const response = await fetch(`/api/tracking?userId=${encodeURIComponent(user.id)}`);
+          if (response.ok) {
+            const data = await response.json();
+            setTracking(data);
+          }
         }
-    } catch (error) {
-      console.error("Failed to save state to localStorage", error);
+      } catch (error) {
+        console.error('Error fetching tracking data:', error);
+      }
+    };
+    fetchTracking();
+  }, [state.showDashboard, user]);
+
+  // Admin: fetch all users, activities, and tracking totals
+  useEffect(() => {
+    let interval: any;
+    const fetchAdmin = async () => {
+      try {
+        if (isAdmin && state.showDashboard) {
+          const [usersRes, activitiesRes, trackingRes] = await Promise.all([
+            fetch('/api/users'),
+            fetch('/api/activity'),
+            fetch('/api/tracking?admin=true')
+          ]);
+          if (usersRes.ok) setAdminUsers(await usersRes.json());
+          if (activitiesRes.ok) setAdminActivities(await activitiesRes.json());
+          if (trackingRes.ok) {
+            const trackingData = await trackingRes.json();
+            setAdminTotals(trackingData.totals || { uploads: 0, remarks: 0, learnersTracked: 0 });
+            setAdminRecentRemarks(trackingData.recent?.remarks || []);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching admin data:', error);
+      }
+    };
+    if (isAdmin && state.showDashboard) {
+      fetchAdmin();
+      interval = setInterval(fetchAdmin, 30000);
     }
-  }, [state.uploadState, state.fileName, state.csvContent, state.learnerData, state.uniqueCohorts, state.selectedCohorts, state.remarks, state.colIndices]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isAdmin, state.showDashboard]);
+
+  // Keep authentication state in sync
+  useEffect(() => {
+    if (user) {
+      state.setIsAuthenticated(true);
+    } else {
+      state.setIsAuthenticated(false);
+    }
+  }, [user, state.setIsAuthenticated]);
+
+  // ALL USEMEMO HOOKS MUST BE AT THE TOP TOO
+  const filteredData = useMemo(() => state.learnerData.filter((row) =>
+    state.selectedCohorts.includes(row.Cohort || "N/A")
+  ), [state.learnerData, state.selectedCohorts]);
+
+  const submissionSummary: SubmissionSummary[] = useMemo(() => {
+    const totalSubmitted = filteredData.filter(row => row["Submission Status"] === "Submitted").length;
+    const totalNotSubmitted = filteredData.length - totalSubmitted;
+    return [
+      { name: "Submitted", value: totalSubmitted },
+      { name: "Not Submitted", value: totalNotSubmitted }
+    ];
+  }, [filteredData]);
+
+  const notSubmittedData = useMemo(() => filteredData.filter(
+    (row) => row["Submission Status"] === "Not Submitted"
+  ), [filteredData]);
+  
+  const learnerTypeSummary = useMemo(() => {
+    return notSubmittedData.reduce((acc, learner) => {
+      const type = learner["Learner Type"]?.trim();
+      if (type) {
+        acc[type] = (acc[type] || 0) + 1;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+  }, [notSubmittedData]);
+
+  const currentStep = useMemo(() => {
+    if (state.uploadState !== 'success') return 1;
+    if (state.selectedCohorts.length === 0) return 2;
+    if (state.isSummaryView) return 3;
+    return 1;
+  }, [state.uploadState, state.selectedCohorts.length, state.isSummaryView]);
+
+  
+  const { setUploadState, setErrorMessage, setLearnerData, setUniqueCohorts, setSelectedCohorts, setRemarks } = state;
   
   const processFile = async (file: File) => {
     state.setUploadState("validating");
@@ -312,38 +478,72 @@ export default function Home() {
       if (user && rowCount > 0) {
         console.log(`✅ CSV uploaded: ${file.name} with ${rowCount} rows by ${user.name || user.email}`);
 
-        // Store upload info locally
-        const uploads = JSON.parse(localStorage.getItem('csv_uploads') || '[]');
-        uploads.push({
-          userId: user.id,
-          filename: file.name,
-          rowCount,
-          uploadedAt: new Date().toISOString(),
-          fileSize: file.size,
-          uploadTime: new Date().toLocaleString()
-        });
-        localStorage.setItem('csv_uploads', JSON.stringify(uploads));
+        // Try to track upload in Supabase, fallback to localStorage
+        try {
+          await fetch('/api/tracking', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'upload',
+              data: {
+                userId: user.id,
+                filename: file.name,
+                rowCount,
+                fileSize: file.size,
+                uploadTime: new Date().toLocaleString()
+              }
+            })
+          });
 
-        // Track activity
-        const activities = JSON.parse(localStorage.getItem('user_activity') || '[]');
-        activities.push({
-          id: Date.now().toString(),
-          userId: user.id,
-          activity: 'CSV Upload',
-          details: {
+          await fetch('/api/activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: Date.now().toString(),
+              user_id: user.id,
+              activity: 'CSV Upload',
+              details: {
+                filename: file.name,
+                rowCount,
+                fileSize: file.size,
+                uploadTime: new Date().toLocaleString()
+              },
+              timestamp: new Date().toISOString(),
+              date: new Date().toLocaleDateString(),
+              time: new Date().toLocaleTimeString()
+            })
+          });
+        } catch (apiError) {
+          console.log('API tracking failed, using localStorage fallback');
+          // Fallback to localStorage
+          const uploads = JSON.parse(localStorage.getItem('csv_uploads') || '[]');
+          uploads.push({
+            userId: user.id,
             filename: file.name,
             rowCount,
+            uploadedAt: new Date().toISOString(),
             fileSize: file.size,
             uploadTime: new Date().toLocaleString()
-          },
-          timestamp: new Date().toISOString(),
-          date: new Date().toLocaleDateString(),
-          time: new Date().toLocaleTimeString()
-        });
-        localStorage.setItem('user_activity', JSON.stringify(activities));
+          });
+          localStorage.setItem('csv_uploads', JSON.stringify(uploads));
 
-        // Notify UI listeners
-        window.dispatchEvent(new CustomEvent('storageUpdated'));
+          const activities = JSON.parse(localStorage.getItem('user_activity') || '[]');
+          activities.push({
+            id: Date.now().toString(),
+            userId: user.id,
+            activity: 'CSV Upload',
+            details: {
+              filename: file.name,
+              rowCount,
+              fileSize: file.size,
+              uploadTime: new Date().toLocaleString()
+            },
+            timestamp: new Date().toISOString(),
+            date: new Date().toLocaleDateString(),
+            time: new Date().toLocaleTimeString()
+          });
+          localStorage.setItem('user_activity', JSON.stringify(activities));
+        }
 
         // Also persist to tracking.json via API and server activity
         try {
@@ -448,19 +648,6 @@ export default function Home() {
     state.setRemarks(prevRemarks => prevRemarks.filter(remark => learnersInSelectedCohorts.has(remark.key)));
   };
   
-  const filteredData = useMemo(() => state.learnerData.filter((row) =>
-    state.selectedCohorts.includes(row.Cohort || "N/A")
-  ), [state.learnerData, state.selectedCohorts]);
-
-  const submissionSummary: SubmissionSummary[] = useMemo(() => {
-    const totalSubmitted = filteredData.filter(row => row["Submission Status"] === "Submitted").length;
-    const totalNotSubmitted = filteredData.length - totalSubmitted;
-    return [
-        { name: 'Submitted', value: totalSubmitted },
-        { name: 'Not Submitted', value: totalNotSubmitted },
-    ];
-  }, [filteredData]);
-  
   const CHART_COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))"];
 
   const summaryViewContent = (
@@ -527,23 +714,6 @@ export default function Home() {
     </Card>
   );
 
-  const notSubmittedData = useMemo(() => filteredData.filter(
-    (row) => row["Submission Status"] === "Not Submitted"
-  ), [filteredData]);
-  
-  const learnerTypeSummary = useMemo(() => {
-    return notSubmittedData.reduce((acc, learner) => {
-      const type = learner["Learner Type"]?.trim();
-      if (type) {
-        if (!acc[type]) {
-          acc[type] = 0;
-        }
-        acc[type]++;
-      }
-      return acc;
-    }, {} as Record<string, number>);
-  }, [notSubmittedData]);
-
   const handleEditRemark = (learner: LearnerData) => {
     state.setCurrentLearner(learner);
     state.setRemarkDialogOpen(true);
@@ -570,39 +740,75 @@ export default function Home() {
       if (user) {
         console.log(`💬 Remark saved for ${learner.Email}: ${remarkText}`);
 
-        // Store remark locally
-        const remarks = JSON.parse(localStorage.getItem('user_remarks') || '[]');
-        remarks.push({
-          userId: user.id,
-          learnerEmail: learner.Email,
-          learnerName: learner.Name || '',
-          remark: remarkText,
-          learnerCohort: learner.Cohort || '',
-          createdAt: new Date().toISOString(),
-          timestamp: new Date().toLocaleString()
-        });
-        localStorage.setItem('user_remarks', JSON.stringify(remarks));
+        // Try to store remark in Supabase, fallback to localStorage
+        try {
+          await fetch('/api/tracking', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'remark',
+              data: {
+                userId: user.id,
+                learnerEmail: learner.Email,
+                learnerName: learner.Name || '',
+                remark: remarkText,
+                learnerCohort: learner.Cohort || '',
+                createdAt: new Date().toISOString(),
+                timestamp: new Date().toLocaleString()
+              }
+            })
+          });
 
-        // Track activity
-        const activities = JSON.parse(localStorage.getItem('user_activity') || '[]');
-        activities.push({
-          id: Date.now().toString(),
-          userId: user.id,
-          activity: 'Remark Added',
-          details: {
+          await fetch('/api/activity', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: Date.now().toString(),
+              user_id: user.id,
+              activity: 'Remark Added',
+              details: {
+                learnerEmail: learner.Email,
+                learnerName: learner.Name || '',
+                remark: remarkText.substring(0, 100) + (remarkText.length > 100 ? '...' : ''),
+                learnerCohort: learner.Cohort || ''
+              },
+              timestamp: new Date().toISOString(),
+              date: new Date().toLocaleDateString(),
+              time: new Date().toLocaleTimeString()
+            })
+          });
+        } catch (apiError) {
+          console.log('API tracking failed, using localStorage fallback');
+          // Fallback to localStorage
+          const remarks = JSON.parse(localStorage.getItem('user_remarks') || '[]');
+          remarks.push({
+            userId: user.id,
             learnerEmail: learner.Email,
             learnerName: learner.Name || '',
-            remark: remarkText.substring(0, 100) + (remarkText.length > 100 ? '...' : ''),
-            learnerCohort: learner.Cohort || ''
-          },
-          timestamp: new Date().toISOString(),
-          date: new Date().toLocaleDateString(),
-          time: new Date().toLocaleTimeString()
-        });
-        localStorage.setItem('user_activity', JSON.stringify(activities));
+            remark: remarkText,
+            learnerCohort: learner.Cohort || '',
+            createdAt: new Date().toISOString(),
+            timestamp: new Date().toLocaleString()
+          });
+          localStorage.setItem('user_remarks', JSON.stringify(remarks));
 
-        // Notify UI listeners
-        window.dispatchEvent(new CustomEvent('storageUpdated'));
+          const activities = JSON.parse(localStorage.getItem('user_activity') || '[]');
+          activities.push({
+            id: Date.now().toString(),
+            userId: user.id,
+            activity: 'Remark Added',
+            details: {
+              learnerEmail: learner.Email,
+              learnerName: learner.Name || '',
+              remark: remarkText.substring(0, 100) + (remarkText.length > 100 ? '...' : ''),
+              learnerCohort: learner.Cohort || ''
+            },
+            timestamp: new Date().toISOString(),
+            date: new Date().toLocaleDateString(),
+            time: new Date().toLocaleTimeString()
+          });
+          localStorage.setItem('user_activity', JSON.stringify(activities));
+        }
 
         // Also persist to tracking.json via API and server activity
         try {
@@ -746,7 +952,6 @@ export default function Home() {
     reset();
 
     localStorage.removeItem('appState');
-    window.dispatchEvent(new CustomEvent('storageUpdated'));
 
     toast({
       title: "Data Cleared",
@@ -754,120 +959,6 @@ export default function Home() {
     });
   };
 
-
-  useEffect(() => {
-    // This effect creates a hidden clickable element that the header can trigger
-    const handler = document.createElement('a');
-    handler.id = 'summary-link-handler';
-    handler.addEventListener('click', () => state.setSummaryView(true));
-    document.body.appendChild(handler);
-
-    return () => {
-        document.body.removeChild(handler);
-    };
-  }, [state.setSummaryView]);
-
-  useEffect(() => {
-    const handleSummaryEvent = () => {
-      state.setSummaryView(true);
-      state.setShowDashboard(false);
-    };
-
-    const handleDashboardEvent = () => {
-      if (isAdmin) {
-        setCurrentView('dashboard');
-      } else {
-        state.setShowDashboard(true);
-        state.setSummaryView(false);
-      }
-    };
-
-    const handleHomeEvent = () => {
-      setCurrentView('home');
-      state.setShowDashboard(false);
-      state.setSummaryView(false);
-    };
-
-    const handleCallingTrackerEvent = () => {
-      setCurrentView('calling-tracker');
-      state.setShowDashboard(false);
-      state.setSummaryView(false);
-    };
-
-    window.addEventListener('showSummary', handleSummaryEvent);
-    window.addEventListener('showDashboard', handleDashboardEvent);
-    window.addEventListener('showHome', handleHomeEvent);
-    window.addEventListener('showCallingTracker', handleCallingTrackerEvent);
-    
-    return () => {
-      window.removeEventListener('showSummary', handleSummaryEvent);
-      window.removeEventListener('showDashboard', handleDashboardEvent);
-      window.removeEventListener('showHome', handleHomeEvent);
-      window.removeEventListener('showCallingTracker', handleCallingTrackerEvent);
-    };
-  }, [state.setSummaryView, state.setShowDashboard]);
-
-  // Fetch tracking totals when Dashboard is shown
-  useEffect(() => {
-    const fetchTracking = async () => {
-      try {
-        if (user && state.showDashboard) {
-          const res = await fetch(`/api/tracking?userId=${encodeURIComponent(user.id)}`);
-          if (res.ok) {
-            const json = await res.json();
-            setTracking(json);
-          }
-        }
-      } catch (e) {
-        console.error('Failed to fetch tracking overview', e);
-      }
-    };
-    fetchTracking();
-  }, [state.showDashboard, user]);
-
-  // Admin: fetch all users, activities, and tracking totals; poll for realtime updates
-  useEffect(() => {
-    let interval: any;
-    const fetchAdmin = async () => {
-      try {
-        if (isAdmin && state.showDashboard) {
-          const [usersRes, actRes, trackRes] = await Promise.all([
-            fetch('/api/users'),
-            fetch('/api/activity'),
-            fetch('/api/tracking'),
-          ]);
-          if (usersRes.ok) setAdminUsers(await usersRes.json());
-          if (actRes.ok) setAdminActivities(await actRes.json());
-          if (trackRes.ok) {
-            const t = await trackRes.json();
-            setAdminTotals(t?.totals || null);
-            setAdminCohortDist(t?.remarksByCohort || {});
-            setAdminRecentRemarks((t?.recent && t.recent.remarks) ? t.recent.remarks : []);
-          }
-        }
-      } catch (e) {
-        console.error('Failed to fetch admin data', e);
-      }
-    };
-    fetchAdmin();
-    if (isAdmin && state.showDashboard) {
-      interval = setInterval(fetchAdmin, 5000);
-      window.addEventListener('storageUpdated', fetchAdmin as any);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-      window.removeEventListener('storageUpdated', fetchAdmin as any);
-    };
-  }, [isAdmin, state.showDashboard]);
-
-    // Keep authentication state in sync with auth context
-    useEffect(() => {
-      if (user) {
-        state.setIsAuthenticated(true);
-      } else {
-        state.setIsAuthenticated(false);
-      }
-    }, [user, state]);
 
   const renderUploadState = () => {
     switch (state.uploadState) {
@@ -887,23 +978,11 @@ export default function Home() {
           </div>
         );
       default:
-        return null;
     }
   };
   
   const showProcessingUI = state.uploadState === 'success' && state.learnerData.length > 0;
-
-  const currentStep = useMemo(() => {
-    if (state.uploadState !== 'success') return 1;
-    if (state.selectedCohorts.length === 0) return 2;
-    if (state.isSummaryView) return 3;
-    if (state.isReportGenerated) return 5;
-    // Step 4 is active when cohorts are selected, user is not in summary view, and report is not generated.
-    if (state.selectedCohorts.length > 0 && !state.isSummaryView && !state.isReportGenerated) return 4;
-    return 1; // Default
-  }, [state.uploadState, state.selectedCohorts, state.isSummaryView, state.isReportGenerated]);
   
-
 
 const mainContent = (
     <>
@@ -1212,19 +1291,40 @@ const mainContent = (
                 <Card className="md:col-span-2">
                     <CardHeader><CardTitle>Remarks for Non-Submissions</CardTitle><CardDescription>Add remarks for learners who have not submitted. These will be included in the report.</CardDescription></CardHeader>
                     <CardContent>
+                      <div className="mb-4">
+                        <Input
+                          placeholder="🔍 Search learners by email, cohort, or submission name..."
+                          value={learnerSearchQuery}
+                          onChange={(e) => setLearnerSearchQuery(e.target.value)}
+                          className="max-w-md"
+                        />
+                      </div>
                       <Table>
                         <TableHeader><TableRow><TableHead>Learner Email</TableHead><TableHead>Cohort</TableHead><TableHead>Submission Name</TableHead><TableHead>Remarks</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader>
                         <TableBody>
                           {notSubmittedData.length > 0 ? (
-                            notSubmittedData.map((learner) => (
-                              <TableRow key={generateRemarkKey(learner)}>
-                                <TableCell>{learner.Email}</TableCell>
-                                <TableCell>{learner.Cohort}</TableCell>
-                                <TableCell>{learner["Submission Name"]}</TableCell>
-                                <TableCell className="max-w-xs truncate">{getRemarkForLearner(learner) || <span className="text-muted-foreground">No remarks yet</span>}</TableCell>
-                                <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleEditRemark(learner)}><Pencil className="h-4 w-4" /></Button></TableCell>
-                              </TableRow>
-                            ))
+                            notSubmittedData
+                              .filter((learner) => {
+                                if (!learnerSearchQuery) return true;
+                                const searchLower = learnerSearchQuery.toLowerCase();
+                                const email = (learner.Email || '').toLowerCase();
+                                const cohort = (learner.Cohort || '').toLowerCase();
+                                const submissionName = (learner["Submission Name"] || '').toLowerCase();
+                                const remark = (getRemarkForLearner(learner) || '').toLowerCase();
+                                return email.includes(searchLower) || 
+                                       cohort.includes(searchLower) || 
+                                       submissionName.includes(searchLower) ||
+                                       remark.includes(searchLower);
+                              })
+                              .map((learner) => (
+                                <TableRow key={generateRemarkKey(learner)}>
+                                  <TableCell>{learner.Email}</TableCell>
+                                  <TableCell>{learner.Cohort}</TableCell>
+                                  <TableCell>{learner["Submission Name"]}</TableCell>
+                                  <TableCell className="max-w-xs truncate">{getRemarkForLearner(learner) || <span className="text-muted-foreground">No remarks yet</span>}</TableCell>
+                                  <TableCell className="text-right"><Button variant="ghost" size="icon" onClick={() => handleEditRemark(learner)}><Pencil className="h-4 w-4" /></Button></TableCell>
+                                </TableRow>
+                              ))
                           ) : (
                             <TableRow><TableCell colSpan={5} className="text-center py-10">No learners with "Not Submitted" status in selected cohorts.</TableCell></TableRow>
                           )}
@@ -1541,25 +1641,21 @@ const mainContent = (
     </div>
   );
 
-  // Duplicate `summaryViewContent` removed here; the first definition earlier in the file is the one used.
-
-  // Early return for loading state
+  // Show loading while checking authentication
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+        <div className="text-white text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Loading...</p>
+        </div>
       </div>
     );
   }
 
-  // Redirect to landing page if user is not authenticated
+  // Don't render anything if not authenticated (will redirect)
   if (!user) {
-    router.push('/landing');
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+    return null;
   }
 
   return (
@@ -1567,6 +1663,9 @@ const mainContent = (
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(139,69,19,0.1),transparent_50%)] pointer-events-none"></div>
       <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(139,69,19,0.03)_25%,rgba(139,69,19,0.03)_50%,transparent_50%,transparent_75%,rgba(139,69,19,0.03)_75%)] bg-[length:20px_20px] pointer-events-none"></div>
+      
+      <AppHeader />
+      
       <main className="flex-grow container mx-auto p-4 md:p-8 space-y-8 relative z-10">
         {/* Content without duplicate header */}
 
@@ -1582,6 +1681,9 @@ const mainContent = (
               // Regular users get the normal home workflow
               return (
                 <>
+                  {/* Badge Celebration Message */}
+                  <UserBadges userId={user.id} displayMode="header" />
+
                   {!state.showDashboard && (
                     <Stepper steps={STEPS} currentStep={currentStep} />
                   )}
@@ -1603,6 +1705,10 @@ const mainContent = (
               );
             case 'calling-tracker':
               return isAdmin ? <AdminCallingTracker /> : <CallingTracker />;
+            case 'rankings':
+              return <UserRankings isAdmin={isAdmin} />;
+            case 'profile':
+              return <UserProfile />;
             default:
               // Default view
               if (isAdmin) {
@@ -1631,55 +1737,19 @@ const mainContent = (
           onSave={handleSaveRemark}
         />
       )}
-      
+
+      <BadgeModal
+        isOpen={showBadgeModal}
+        onClose={() => setShowBadgeModal(false)}
+        userId={user?.id}
+      />
+
       <EmailReportDialog
         isOpen={state.isEmailDialogOpen}
         setIsOpen={state.setEmailDialogOpen}
         onSend={handleEmail}
         isSending={state.isSendingEmail}
       />
-    </div>
-  );
-}
-
-// Simple ProfileMenu component placed here to avoid importing extra UI primitives.
-function ProfileMenu({ user, onLogout }: { user: any; onLogout: () => void }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (!ref.current) return;
-      if (ref.current.contains(e.target as Node)) return;
-      setOpen(false);
-    };
-    document.addEventListener('click', handler);
-    return () => document.removeEventListener('click', handler);
-  }, []);
-
-  const displayName = user?.name || user?.email || 'upGrad01';
-  const initial = (displayName && displayName.charAt(0).toUpperCase()) || 'U';
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        title={displayName}
-        className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent/10 hover:text-accent-foreground rounded-full h-10 w-10 bg-transparent border-0"
-        onClick={() => setOpen(o => !o)}
-        aria-label={`Profile for ${displayName}`}
-      >
-        {/* Transparent circular initial; matches website transparent look */}
-        <span className="h-8 w-8 flex items-center justify-center rounded-full bg-transparent text-sm font-medium text-foreground">{initial}</span>
-      </button>
-
-      {open && (
-        <div className="absolute right-0 mt-2 w-56 bg-white border rounded-md shadow-lg z-40">
-          <div className="px-3 py-3 text-sm">Signed in as <br /><strong>{displayName}</strong></div>
-          <div className="border-t px-2 py-2">
-            <button className="w-full text-left px-2 py-2 hover:bg-gray-50 rounded" onClick={() => { setOpen(false); onLogout(); }}>Logout</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

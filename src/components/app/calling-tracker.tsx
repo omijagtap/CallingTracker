@@ -24,7 +24,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth-context-supabase';
 import { Alert, AlertDescription } from '../ui/alert';
 
 const formSchema = z.object({
@@ -190,8 +190,28 @@ export function CallingTracker() {
   const sendEmailReport = async () => {
     if (!processedData || !user) return;
 
-    const recipient = prompt('Enter recipient email address:');
-    if (!recipient) return;
+    // Try to get user's reporting manager email first
+    let recipient = '';
+    try {
+      const profileRes = await fetch(`/api/profile?userId=${user.id}`);
+      if (profileRes.ok) {
+        const profile = await profileRes.json();
+        if (profile.reportingManagerEmail) {
+          const useManagerEmail = confirm(`Send report to your reporting manager (${profile.reportingManager}: ${profile.reportingManagerEmail})?`);
+          if (useManagerEmail) {
+            recipient = profile.reportingManagerEmail;
+          }
+        }
+      }
+    } catch (error) {
+      console.log('Could not fetch user profile');
+    }
+
+    // If no manager email or user declined, ask for manual input
+    if (!recipient) {
+      recipient = prompt('Enter recipient email address:') || '';
+      if (!recipient) return;
+    }
 
     try {
       // Prepare report data

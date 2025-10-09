@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth-context-supabase';
 
 interface DatabaseHookResult {
   submitUpload: (upload: {

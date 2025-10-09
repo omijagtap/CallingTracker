@@ -1,288 +1,179 @@
 import nodemailer from 'nodemailer';
 
-interface EmailOptions {
-  to: string;
+// Simple email interface
+interface SimpleEmail {
+  to: string | string[];
   subject: string;
-  html: string;
-  attachments?: Array<{
-    filename: string;
-    content: string;
-    contentType: string;
-  }>;
+  message: string;
+  userId?: string;
 }
 
-interface EmailReport {
-  cohorts: string[];
-  learnerCount: number;
-  reportType: 'calling-report' | 'no-submission-report';
-  data: any[];
-}
+// SMTP configuration using environment variables for security
+const SMTP_CONFIG = {
+  host: process.env.SMTP_HOST || 'smtp.office365.com',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER || 'your_email@upgrad.com',
+    pass: process.env.SMTP_PASS || 'your_app_password'
+  },
+  tls: {
+    rejectUnauthorized: false
+  },
+  connectionTimeout: 60000,
+  greetingTimeout: 30000,
+  socketTimeout: 60000,
+  debug: process.env.NODE_ENV === 'development'
+};
 
-// Create transporter with SMTP configuration
+// Create simple transporter
 function createTransporter() {
-  // Get credentials from environment variables
-  const senderEmail = process.env.SENDER_EMAIL;
-  const appPassword = process.env.APP_PASSWORD;
-  
-  if (!senderEmail || !appPassword) {
-    throw new Error('Missing email credentials. Please set SENDER_EMAIL and APP_PASSWORD in environment variables.');
-  }
-  
-  // Simple Outlook/Office365 configuration
-  const config = {
-    host: 'smtp-mail.outlook.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: senderEmail,
-      pass: appPassword,
-    },
-    tls: {
-      rejectUnauthorized: false
-    }
-  };
-  
-  // Create and return the transporter
-  return nodemailer.createTransport(config);
+  console.log('🔧 Creating transporter with config:', {
+    host: SMTP_CONFIG.host,
+    port: SMTP_CONFIG.port,
+    user: SMTP_CONFIG.auth.user,
+    secure: SMTP_CONFIG.secure
+  });
+  return nodemailer.createTransport(SMTP_CONFIG);
 }
 
-// Generate HTML table for email
-function generateEmailTable(data: any[]): string {
-  if (!data || data.length === 0) {
-    return '<p>No data available</p>';
-  }
-
-  const headers = Object.keys(data[0]);
-  
-  let html = `
-    <div style="overflow-x: auto;">
-      <table style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; margin: 20px 0;">
-        <thead>
-          <tr style="background-color: #004080; color: white; font-weight: bold;">
-  `;
-
-  headers.forEach(header => {
-    html += `<th style="padding: 12px; border: 1px solid #ddd; text-align: center;">${header}</th>`;
-  });
-
-  html += `
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  data.forEach((row, index) => {
-    const bgColor = index % 2 === 0 ? '#f2f2f2' : '#ffffff';
-    html += `<tr style="background-color: ${bgColor};">`;
+// Simple email sending function
+export async function sendSimpleEmail(emailData: SimpleEmail): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log('📧 Starting email send process...');
+    console.log('📧 Recipient:', emailData.to);
+    console.log('📧 Subject:', emailData.subject);
+    console.log('📧 SMTP Config:', {
+      host: SMTP_CONFIG.host,
+      port: SMTP_CONFIG.port,
+      user: SMTP_CONFIG.auth.user
+    });
     
-    headers.forEach(header => {
-      let cellStyle = 'padding: 8px; border: 1px solid #ddd; text-align: center; word-wrap: break-word; max-width: 200px;';
-      
-      // Special styling for specific columns
-      if (header === 'Learner Type') {
-        const value = row[header]?.toString().toLowerCase();
-        if (value === 'international') {
-          cellStyle += ' background-color: #cfe2f3;';
-        } else if (value === 'domestic') {
-          cellStyle += ' background-color: #d9ead3;';
+    const transporter = createTransporter();
+    console.log('📧 Transporter created successfully');
+    
+    // Convert message to HTML (make links clickable)
+    const htmlMessage = emailData.message
+      .replace(/\n/g, '<br>')
+      .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
+    
+    const mailOptions = {
+      from: '"UpGrad System" <intlesgcidba@upgrad.com>',
+      to: Array.isArray(emailData.to) ? emailData.to.join(', ') : emailData.to,
+      subject: emailData.subject,
+      text: emailData.message,
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+              <h2 style="margin: 0;">📧 ${emailData.subject}</h2>
+            </div>
+            <div style="background: white; padding: 20px; border: 1px solid #ddd; border-top: none;">
+              <div style="margin-bottom: 20px;">
+                ${htmlMessage}
+              </div>
+            </div>
+            <div style="background: #f1f3f4; padding: 15px; border-radius: 0 0 8px 8px; text-align: center;">
+              <p style="margin: 0; color: #666; font-size: 14px;">
+                <strong>Best regards,</strong><br>
+                UpGrad Team
+              </p>
+            </div>
+          </div>
+        </div>
+      `
+    };
+    const info = await transporter.sendMail(mailOptions);
+    
+    // Track email activity in dedicated email_activities table
+    if (emailData.userId) {
+      try {
+        const trackingResponse = await fetch('/api/email-activities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: `email_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            user_id: emailData.userId,
+            user_email: emailData.userId === 'admin' ? 'admin@upgrad.com' : emailData.userId,
+            recipient_email: Array.isArray(emailData.to) ? emailData.to.join(', ') : emailData.to,
+            subject: emailData.subject,
+            message: emailData.message,
+            status: 'sent',
+            sent_at: new Date().toISOString()
+          })
+        });
+        
+        if (trackingResponse.ok) {
+          console.log('✅ Email activity tracked successfully');
+        } else {
+          const errorText = await trackingResponse.text();
+          console.warn('❌ Failed to track email activity:', errorText);
+        }
+      } catch (trackingError) {
+        console.warn('❌ Failed to track email activity:', trackingError);
+        
+        // Fallback to localStorage
+        try {
+          const emailActivity = {
+            id: `email_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            user_id: emailData.userId,
+            user_email: emailData.userId,
+            recipient_email: Array.isArray(emailData.to) ? emailData.to.join(', ') : emailData.to,
+            subject: emailData.subject,
+            message: emailData.message,
+            status: 'sent',
+            sent_at: new Date().toISOString()
+          };
+          
+          const existingActivities = JSON.parse(localStorage.getItem('email_activities') || '[]');
+          existingActivities.push(emailActivity);
+          localStorage.setItem('email_activities', JSON.stringify(existingActivities));
+          console.log('📝 Email activity saved to localStorage fallback');
+        } catch (localError) {
+          console.warn('❌ Failed to save to localStorage:', localError);
         }
       }
-      
-      if (header === 'Remarks' && row[header] && row[header].toString().trim() !== '') {
-        cellStyle += ' background-color: #f8cbad;';
-      }
-      
-      html += `<td style="${cellStyle}">${row[header] || ''}</td>`;
-    });
-    
-    html += '</tr>';
-  });
-
-  html += `
-        </tbody>
-      </table>
-    </div>
-  `;
-
-  return html;
-}
-
-// Generate email content
-function generateEmailContent(report: EmailReport, recipientName: string = 'Manager'): string {
-  const { cohorts, learnerCount, reportType, data } = report;
-  const cohortText = cohorts.length === 1 ? 'Cohort' : 'Cohorts';
-  const cohortList = cohorts.join(', ');
-  const today = new Date().toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  });
-
-  const table = generateEmailTable(data);
-
-  if (reportType === 'calling-report') {
-    return `
-      <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-          <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-              <h1 style="margin: 0; font-size: 24px;">📞 Calling Report with Remarks</h1>
-              <p style="margin: 10px 0 0 0; opacity: 0.9;">${cohortText} • ${today}</p>
-            </div>
-            
-            <div style="background: #f8f9fa; padding: 20px; border-left: 4px solid #667eea;">
-              <p style="margin: 0 0 10px 0;"><strong>Hi ${recipientName},</strong></p>
-              <p style="margin: 0;">Based on the selected ${cohortText.toLowerCase()} <strong>${cohortList}</strong>, below is the <strong>Calling Report with collected remarks</strong> for learners who have <strong>Not Submitted</strong>:</p>
-            </div>
-            
-            <div style="padding: 20px; background: white;">
-              <div style="background: #e3f2fd; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-                <h3 style="margin: 0 0 10px 0; color: #1976d2;">📊 Summary</h3>
-                <p style="margin: 0;"><strong>Total Learners:</strong> ${learnerCount}</p>
-                <p style="margin: 5px 0 0 0;"><strong>${cohortText}:</strong> ${cohortList}</p>
-              </div>
-              
-              ${table}
-            </div>
-            
-            <div style="background: #f1f3f4; padding: 15px; border-radius: 0 0 8px 8px; text-align: center;">
-              <p style="margin: 0; color: #666; font-size: 14px;">
-                <strong>Best regards,</strong><br>
-                UpGrad Team<br>
-                <em>Calling Tracker System</em>
-              </p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-  } else {
-    return `
-      <html>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-          <div style="max-width: 800px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
-              <h1 style="margin: 0; font-size: 24px;">📋 No Submission Report</h1>
-              <p style="margin: 10px 0 0 0; opacity: 0.9;">${cohortText} • ${today}</p>
-            </div>
-            
-            <div style="background: #fff3cd; padding: 20px; border-left: 4px solid #ff6b6b;">
-              <p style="margin: 0 0 10px 0;"><strong>Hi ${recipientName},</strong></p>
-              <p style="margin: 0;">Based on the selected ${cohortText.toLowerCase()}, here is the <strong>No Submission Report</strong> for learners:</p>
-            </div>
-            
-            <div style="padding: 20px; background: white;">
-              <div style="background: #ffebee; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
-                <h3 style="margin: 0 0 10px 0; color: #c62828;">⚠️ Summary</h3>
-                <p style="margin: 0;"><strong>Total Not Submitted:</strong> ${learnerCount}</p>
-                <p style="margin: 5px 0 0 0;"><strong>${cohortText}:</strong> ${cohortList}</p>
-              </div>
-              
-              ${table}
-            </div>
-            
-            <div style="background: #f1f3f4; padding: 15px; border-radius: 0 0 8px 8px; text-align: center;">
-              <p style="margin: 0; color: #666; font-size: 14px;">
-                <strong>Best regards,</strong><br>
-                UpGrad Team<br>
-                <em>Calling Tracker System</em>
-              </p>
-            </div>
-          </div>
-        </body>
-      </html>
-    `;
-  }
-}
-
-// Main email sending function
-export async function sendEmailReport(options: {
-  to: string;
-  report: EmailReport;
-  userInfo: {
-    userId: string;
-    userName: string;
-  };
-}): Promise<{ success: boolean; error?: string }> {
-  try {
-    const { to, report, userInfo } = options;
-    
-    // SMTP configuration is hardcoded for Office 365
-    console.log('Using Office 365 SMTP configuration');
-
-    const transporter = createTransporter();
-    
-    // Generate subject
-    const cohortText = report.cohorts.length === 1 ? 'Cohort' : 'Cohorts';
-    const today = new Date().toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
-    
-    const subject = report.reportType === 'calling-report' 
-      ? `Calling Report with Remarks – ${cohortText} – ${today}`
-      : `No Submission Report – ${cohortText} – ${today}`;
-
-    // Generate email content
-    const html = generateEmailContent(report);
-
-    // Send email
-    const mailOptions: EmailOptions = {
-      to,
-      subject,
-      html,
-    };
-
-    const info = await transporter.sendMail({
-      from: `"UpGrad Calling Tracker" <intlesgcidba@upgrad.com>`,
-      ...mailOptions,
-    });
-
-    // Track the email report
-    try {
-      await fetch('/api/email-reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: userInfo.userId,
-          userName: userInfo.userName,
-          recipientEmail: to,
-          subject,
-          reportType: report.reportType,
-          cohorts: report.cohorts,
-          learnerCount: report.learnerCount,
-          status: 'sent'
-        })
-      });
-    } catch (trackingError) {
-      console.warn('Failed to track email report:', trackingError);
     }
 
     console.log('Email sent successfully:', info.messageId);
+    
+    // Trigger dashboard refresh event
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('emailSent'));
+    }
+    
     return { success: true };
 
   } catch (error: any) {
     console.error('Email sending failed:', error);
     
-    // Track failed email
-    try {
-      await fetch('/api/email-reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: options.userInfo.userId,
-          userName: options.userInfo.userName,
-          recipientEmail: options.to,
-          subject: 'Email Failed',
-          reportType: options.report.reportType,
-          cohorts: options.report.cohorts,
-          learnerCount: options.report.learnerCount,
-          status: 'failed'
-        })
-      });
-    } catch (trackingError) {
-      console.warn('Failed to track failed email:', trackingError);
+    // Track failed email activity
+    if (emailData.userId) {
+      try {
+        const trackingResponse = await fetch('/api/email-activities', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: `email_failed_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            user_id: emailData.userId,
+            user_email: emailData.userId === 'admin' ? 'admin@upgrad.com' : emailData.userId,
+            recipient_email: Array.isArray(emailData.to) ? emailData.to.join(', ') : emailData.to,
+            subject: emailData.subject,
+            message: emailData.message,
+            status: 'failed',
+            error_message: error.message || 'Unknown error',
+            sent_at: new Date().toISOString()
+          })
+        });
+        
+        if (trackingResponse.ok) {
+          console.log('✅ Failed email activity tracked successfully');
+        } else {
+          console.warn('❌ Failed to track email failure');
+        }
+      } catch (trackingError) {
+        console.warn('❌ Failed to track email failure:', trackingError);
+      }
     }
 
     return { 
@@ -293,67 +184,86 @@ export async function sendEmailReport(options: {
 }
 
 // Test email configuration
-export async function testEmailConfiguration(): Promise<{ success: boolean; error?: string }> {
+export async function testEmailConnection(): Promise<{ success: boolean; error?: string }> {
   try {
-    console.log('Testing Office 365 SMTP configuration...');
+    console.log('Testing SMTP connection...');
     
-    // Try multiple Outlook configurations with app password
-    const configs = [
-      {
-        name: 'Outlook Primary (Recommended)',
-        host: 'smtp-mail.outlook.com',
-        port: 587,
-        secure: false,
-        auth: {
-          user: 'intlesgcidba@upgrad.com',
-          pass: 'htmwlfsdhjjmxlls', // App password
-        },
-        tls: {
-          ciphers: 'SSLv3',
-          rejectUnauthorized: false
-        }
-      },
-      {
-        name: 'Office365 Alternative',
-        host: 'smtp.office365.com',
-        port: 587,
-        secure: false,
-        auth: {
-          user: 'intlesgcidba@upgrad.com',
-          pass: 'htmwlfsdhjjmxlls', // App password
-        },
-        tls: {
-          rejectUnauthorized: false
-        }
-      }
-    ];
+    const transporter = createTransporter();
+    await transporter.verify();
     
-    for (let i = 0; i < configs.length; i++) {
-      try {
-        console.log(`Trying ${configs[i].name}:`, {
-          host: configs[i].host,
-          port: configs[i].port,
-          user: configs[i].auth.user
-        });
-        
-        const transporter = nodemailer.createTransport(configs[i]);
-        await transporter.verify();
-        console.log(`Configuration ${i + 1} successful!`);
-        return { success: true };
-      } catch (configError: any) {
-        console.log(`Configuration ${i + 1} failed:`, configError.message);
-        if (i === configs.length - 1) {
-          throw configError; // Throw the last error if all configs fail
-        }
-      }
-    }
+    console.log('SMTP connection successful!');
+    return { success: true };
     
-    return { success: false, error: 'All SMTP configurations failed' };
   } catch (error: any) {
     console.error('SMTP test failed:', error);
     return {
       success: false,
-      error: `SMTP Error: ${error.message}. Please check email credentials and network connection.`
+      error: `Connection failed: ${error.message}`
+    };
+  }
+}
+
+// Alias for backward compatibility
+export const testEmailConfiguration = testEmailConnection;
+
+// Email report interface
+interface EmailReport {
+  cohorts: string[];
+  learnerCount: number;
+  reportType: 'calling-report';
+  data: Array<{
+    Email: string;
+    Cohort: string;
+    Remark: string;
+    'Added By': string;
+    Date: string;
+  }>;
+}
+
+interface EmailReportOptions {
+  to: string;
+  report: EmailReport;
+  userInfo: {
+    userId: string;
+    userName: string;
+  };
+}
+
+// Send email report function
+export async function sendEmailReport(options: EmailReportOptions): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { to, report, userInfo } = options;
+    
+    // Generate email content
+    const subject = `Calling Report - ${report.cohorts.join(', ')} (${report.learnerCount} learners)`;
+    
+    let message = `Dear Team,\n\nPlease find the calling report below:\n\n`;
+    message += `Cohorts: ${report.cohorts.join(', ')}\n`;
+    message += `Total Learners: ${report.learnerCount}\n`;
+    message += `Report Type: ${report.reportType}\n\n`;
+    
+    message += `Report Details:\n`;
+    report.data.forEach((item, index) => {
+      message += `${index + 1}. ${item.Email} (${item.Cohort})\n`;
+      message += `   Remark: ${item.Remark}\n`;
+      message += `   Added By: ${item['Added By']} on ${item.Date}\n\n`;
+    });
+    
+    message += `\nBest regards,\n${userInfo.userName}\nUpGrad Calling Tracker System`;
+    
+    // Send email using the simple email function
+    return await sendSimpleEmail({
+      to,
+      subject,
+      message,
+      userId: userInfo.userId
+    });
+    
+  } catch (error: any) {
+    console.error('Email report sending failed:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to send email report'
     };
   }
 }

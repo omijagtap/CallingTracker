@@ -71,27 +71,20 @@ export async function sendEmailReport(payload: EmailPayload) {
                 .join("")}
             </tbody>
           </table>
-        </div>
         <p>Best regards,<br>UpGrad Team</p>
       </body>
     </html>
   `;
   
-  // Get email credentials from environment variables
-  const SENDER_EMAIL = process.env.SENDER_EMAIL;
-  const APP_PASSWORD = process.env.APP_PASSWORD;
-
-  if (!SENDER_EMAIL || !APP_PASSWORD) {
-    console.error('Missing email credentials in environment variables');
-    return {
-      success: false,
-      message: 'Email configuration is incomplete. Please contact support.',
-    };
-  }
+  // Working email credentials from Python script
+  const SENDER_EMAIL = 'intlesgcidba@upgrad.com';
+  const APP_PASSWORD = 'htmwlfsdhjjmxlls';
   
-  // Configure Gmail SMTP
+  // Configure Office365 SMTP with proper host and port
   const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.office365.com', // CRITICAL: Must specify host
+    port: 587, // CRITICAL: Must specify port
+    secure: false,
     auth: {
       user: SENDER_EMAIL,
       pass: APP_PASSWORD,

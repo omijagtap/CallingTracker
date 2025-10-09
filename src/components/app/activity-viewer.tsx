@@ -26,12 +26,24 @@ export function ActivityViewer({ userId, isOpen, onClose }: ActivityViewerProps)
 
   useEffect(() => {
     if (isOpen && userId) {
-      const userActivities = JSON.parse(localStorage.getItem('user_activity') || '[]')
-        .filter((activity: Activity) => activity.userId === userId)
-        .sort((a: Activity, b: Activity) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-        .slice(0, 10); // Show last 10 activities
+      const loadActivities = async () => {
+        try {
+          const activitiesRes = await fetch('/api/activity');
+          const allActivities = activitiesRes.ok ? await activitiesRes.json() : [];
+          
+          const userActivities = allActivities
+            .filter((activity: any) => (activity.userId || activity.user_id) === userId)
+            .sort((a: Activity, b: Activity) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+            .slice(0, 10); // Show last 10 activities
       
-      setActivities(userActivities);
+          setActivities(userActivities);
+        } catch (error) {
+          console.error('Error loading activities:', error);
+          setActivities([]);
+        }
+      };
+      
+      loadActivities();
     }
   }, [isOpen, userId]);
 

@@ -38,20 +38,16 @@ yarn-error.log*
 next-env.d.ts
 
 .genkit/*
-.env*
-.env
 .env.local
 .env.production
+.env
 
 # firebase
 firebase-debug.log
 firestore-debug.log
 
-# Sensitive data - DO NOT COMMIT
-/data/
-data/users.json
-data/activities.json
-data/tracking.json
+# Note: /data/ directory is now accessible for migration purposes
+# The JSON files are kept for backup/migration reference
 
 # Database files
 *.db

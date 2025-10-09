@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth-context-supabase";
 import Link from "next/link";
 
 const formSchema = z.object({
@@ -21,13 +21,13 @@ const formSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
+
 type FormValues = z.infer<typeof formSchema>;
 
 export default function SignupPage() {
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const { signUp } = useAuth();
+  const { register: registerUser, loading } = useAuth();
 
   const {
     register,
@@ -39,11 +39,9 @@ export default function SignupPage() {
   });
 
   const onSubmit = async (data: FormValues) => {
-    setIsLoading(true);
-    
     try {
       console.log('Creating account for:', data.email);
-      await signUp(data.email, data.password, data.name);
+      await registerUser(data.email, data.password, data.name);
       toast({ 
         title: "Account created successfully!", 
         description: "Please login to continue. Welcome to upGrad!" 
@@ -73,8 +71,6 @@ export default function SignupPage() {
           variant: "destructive",
         });
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -147,8 +143,8 @@ export default function SignupPage() {
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col space-y-4">
-                <Button type="submit" className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg" disabled={isLoading}>
-                  {isLoading ? (
+                <Button type="submit" className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg" disabled={loading}>
+                  {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Creating Account...

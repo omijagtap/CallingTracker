@@ -34,96 +34,36 @@
 - **Email Templates**: Professional email templates
 - **Test Email Feature**: Verify email configuration
 
-### 🎨 Modern UI/UX
 - **Dark Theme**: Professional dark mode interface
 - **Responsive Design**: Works on all device sizes
 - **Animated Components**: Smooth transitions and effects
 - **Accessible**: Built with Radix UI components
 
+## 📞 UpGrad Calling Tracker
+
+A comprehensive web application for tracking learner interactions, managing CSV uploads, and monitoring user activities with real-time email tracking.
+
+## ✨ Features
+
+- **CSV Upload & Processing**: Upload learner data and track submission status
+- **Learner Management**: Add remarks, track history, and manage learner information  
+- **User Dashboard**: Personalized dashboard with activity tracking and statistics
+- **Admin Panel**: Comprehensive admin interface with analytics and user management
+- **Real-time Updates**: Live activity tracking and notifications
+- **Email Integration**: Send reports and notifications with tracking
+- **Data Visualization**: Charts and analytics for better insights
+- **Badge System**: Achievement tracking and user recognition
+- **Online Status**: Real-time user presence monitoring
+
 ## 🛠️ Tech Stack
 
-### Frontend
-- **Framework**: Next.js 15 with App Router
-- **Language**: TypeScript 5
-- **Styling**: Tailwind CSS + Radix UI
-- **Charts**: Recharts for data visualization
-- **Icons**: Lucide React
-
-### Backend
-- **Runtime**: Node.js
-- **Database**: Better SQLite3 (local file-based)
+- **Frontend**: Next.js 15, React, TypeScript
+- **Styling**: Tailwind CSS, Shadcn/ui Components
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Custom authentication system
 - **Email**: Nodemailer with Office365 SMTP
-- **File Processing**: CSV parsing and validation
-
-### Development
-- **Build Tool**: Turbopack (Next.js)
-- **Package Manager**: npm
-- **Type Checking**: TypeScript strict mode
-- **Code Quality**: ESLint + Prettier
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Node.js 18+ installed
-- Git installed
-- Text editor (VS Code recommended)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/omijagtap/CallingTracker.git
-   cd CallingTracker
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   Create a `.env.local` file in the root directory:
-   ```env
-   # Email Configuration
-   SENDER_EMAIL=your-email@upgrad.com
-   APP_PASSWORD=your-app-specific-password
-   
-   # Optional: Database path (defaults to ./data/)
-   DATABASE_PATH=./data/
-   ```
-
-4. **Run the development server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
-
-### Admin Access
-- **Username**: `Air01`
-- **Password**: `Omkar@123`
-
-## 📁 Project Structure
-
-```
-CallingTracker/
-├── src/
-│   ├── app/                    # Next.js App Router
-│   │   ├── api/               # API routes
-│   │   ├── dashboard/         # Dashboard pages
-│   │   ├── login/            # Authentication pages
-│   │   └── landing/          # Landing page
-│   ├── components/
-│   │   ├── app/              # Application components
-│   │   └── ui/               # Reusable UI components
-│   ├── lib/                  # Utilities and configurations
-│   │   ├── auth-context.tsx  # Authentication context
-│   │   ├── db.ts            # Database configuration
-│   │   ├── models.ts        # Data models
-│   │   └── email-service.ts # Email service
-│   └── hooks/               # Custom React hooks
-├── data/                    # Local database files
+- **Charts**: Recharts for data visualization
+- **Deployment**: Render (recommended)
 │   ├── users.json          # User data
 │   ├── activities.json     # Activity logs
 │   └── tracking.json       # Tracking data

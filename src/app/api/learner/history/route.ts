@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLearnerDetails } from '@/lib/tracking';
+import { getLearnerDetails } from '@/lib/tracking-supabase';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Since we don't know the cohort in advance, we'll get all details and filter
-    const allDetails = getLearnerDetails() || [];
+    const allDetails = await getLearnerDetails() || [];
     const learnerDetails = Array.isArray(allDetails) 
       ? allDetails.find((l: { email: string }) => l.email === email)
       : null;

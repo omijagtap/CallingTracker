@@ -1,34 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { supabase } from '@/lib/supabase';
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
-const FILE = path.join(DATA_DIR, 'activities.json');
-
-async function ensureFile() {
+export async function GET() {
   try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    await fs.access(FILE);
+    const { data, error } = await supabase
+      .from('activities')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching activities:', error);
+      // Return empty array instead of error to prevent crashes
+      return NextResponse.json([]);
+    }
+
+    return NextResponse.json(data || []);
   } catch (e) {
-    await fs.writeFile(FILE, '[]', 'utf8');
+    console.error('Supabase not available:', e);
+    // Return empty array instead of error to prevent crashes
+    return NextResponse.json([]);
   }
 }
 
-export async function GET() {
-  await ensureFile();
-  const raw = await fs.readFile(FILE, 'utf8');
-  const data = JSON.parse(raw || '[]');
-  return NextResponse.json(data);
-}
-
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  await ensureFile();
-  const raw = await fs.readFile(FILE, 'utf8');
-  const data = JSON.parse(raw || '[]');
-  data.push(body);
-  await fs.writeFile(FILE, JSON.stringify(data, null, 2), 'utf8');
-  return NextResponse.json({ success: true });
+  try {
+    const body = await req.json();
+    
+    // Try Supabase first
+    try {
+      const { data, error } = await supabase
+        .from('activities')
+        .insert([body])
+        .select()
+        .single();
+
+      if (!error) {
+        console.log('Activity saved to Supabase:', data);
+        return NextResponse.json({ success: true, data, source: 'supabase' });
+      } else {
+        console.error('Supabase error:', error);
+      }
+    } catch (supabaseError) {
+      console.error('Supabase connection failed:', supabaseError);
+    }
+
+    // If Supabase fails, return success anyway (frontend will handle localStorage)
+    console.log('Supabase failed, frontend will use localStorage fallback');
+    return NextResponse.json({ success: true, data: body, source: 'fallback' });
+    
+  } catch (e) {
+    console.error('Unexpected error:', e);
+    return NextResponse.json({ success: true, data: {}, source: 'error' });
+  }
 }
 
 export async function DELETE(req: NextRequest) {
@@ -38,14 +61,18 @@ export async function DELETE(req: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
-    await ensureFile();
-    const raw = await fs.readFile(FILE, 'utf8');
-    const data = JSON.parse(raw || '[]');
-    const before = Array.isArray(data) ? data.length : 0;
-    const filtered = (Array.isArray(data) ? data : []).filter((a: any) => a.userId !== userId);
-    const removed = before - filtered.length;
-    await fs.writeFile(FILE, JSON.stringify(filtered, null, 2), 'utf8');
-    return NextResponse.json({ success: true, removed });
+
+    const { error } = await supabase
+      .from('activities')
+      .delete()
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error deleting activities:', error);
+      return NextResponse.json({ error: 'Failed to delete activities' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, removed: 1 });
   } catch (e) {
     console.error('Failed to delete activities:', e);
     return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });

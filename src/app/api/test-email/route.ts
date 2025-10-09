@@ -14,7 +14,7 @@ export async function GET() {
         config: {
           host: 'smtp.office365.com',
           port: 587,
-          user: process.env.SENDER_EMAIL || 'Email configured via environment variables'
+          user: 'intlesgcidba@upgrad.com'
         }
       });
     } else {
@@ -68,6 +68,27 @@ export async function POST(req: NextRequest) {
         userName: 'Admin Test'
       }
     });
+
+    // Track email activity
+    try {
+      await fetch('http://localhost:3000/api/email-activities', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: 'admin',
+          user_email: 'admin@upgrad.com',
+          recipient_email: testEmail,
+          subject: 'Test Email from UpGrad Calling Tracker',
+          message: 'This is a test email to verify SMTP configuration.',
+          status: result.success ? 'sent' : 'failed',
+          error_message: result.success ? undefined : result.error,
+          sent_at: new Date().toISOString()
+        })
+      });
+      console.log('✅ Test email activity tracked');
+    } catch (trackingError) {
+      console.warn('❌ Failed to track test email activity:', trackingError);
+    }
 
     if (result.success) {
       console.log('✅ Test email sent successfully!');

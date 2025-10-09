@@ -19,24 +19,34 @@ import {
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
+import { Input } from '../ui/input';
 import { 
   BarChart3, 
   Calendar, 
   Clock, 
-  FileText, 
+  FileText,
   MessageSquare, 
   Upload, 
   Users2,
   Activity,
   TrendingUp,
-  Database,
   Settings,
+  User,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Eye,
+  EyeOff,
+  MoreVertical,
   Search
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Button } from '../ui/button';
 import { AdminSearch } from './admin-search';
 import { AnimatedCounter } from '../ui/animated-counter';
+import { BadgeAwardModal } from './badge-award-modal';
+import { OnlineUsersWidget } from './online-users-widget';
+import { EmailSetupWidget } from './email-setup-widget';
 
 interface TrackingData {
   csvUploads: Array<{
@@ -82,6 +92,7 @@ interface TrackingData {
 interface Activity {
   id: string;
   userId: string;
+  user_id?: string; // Supabase field name
   activity: string;
   details: any;
   timestamp: string;
@@ -96,19 +107,36 @@ export function AdminDashboard() {
     learnerDetails: []
   });
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<Array<{
+    id: string;
+    name: string;
+    email: string;
+    is_online: boolean;
+    last_seen: string;
+  }>>([]);
   const [users, setUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [userMap, setUserMap] = useState<{[key: string]: string}>({});
-  const [stats, setStats] = useState({
+  const [userMap, setUserMap] = useState<Record<string, any>>({});
+  const [stats, setStats] = useState<any>({
     totalUsers: 0,
     totalUploads: 0,
     totalRemarks: 0,
     totalLearners: 0,
     activeToday: 0,
-    emailsSent: 0
+    totalEmails: 0
   });
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [filter, setFilter] = useState<string>('');
+  const [timelinePage, setTimelinePage] = useState<number>(1);
+  const TIMELINE_PAGE_SIZE = 9;
+  const [showBadgeModal, setShowBadgeModal] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [adminRemarkSearchQuery, setAdminRemarkSearchQuery] = useState('');
   const [userSpecificData, setUserSpecificData] = useState<any>(null);
+  const [selectedUserForBadge, setSelectedUserForBadge] = useState<any>(null);
 
   // Function to handle user selection from search
   const handleUserSelect = async (user: any) => {
@@ -203,14 +231,34 @@ export function AdminDashboard() {
           sortedUserRemarks = [];
         }
         
-        // Count user's emails from activities
-        const userEmails = userActivities.filter((activity: any) => 
-          activity.activity.toLowerCase().includes('email') || 
-          activity.activity.toLowerCase().includes('mail') ||
-          activity.activity.toLowerCase().includes('sent')
-        ).length;
+        // Count user's emails from email_activities table
+        let userEmails = 0;
+        try {
+          const emailRes = await fetch(`/api/email-activities?userId=${user.id}`);
+          if (emailRes.ok) {
+            const emailActivities = await emailRes.json();
+            userEmails = emailActivities.filter((email: any) => email.status === 'sent').length;
+            console.log('📧 User emails found from email_activities:', userEmails);
+          } else {
+            console.log('📧 Email activities API not available, using activity fallback');
+            // Fallback: Count from general activities
+            userEmails = userActivities.filter((activity: any) => 
+              activity.activity.toLowerCase().includes('email') || 
+              activity.activity.toLowerCase().includes('mail') ||
+              activity.activity.toLowerCase().includes('sent')
+            ).length;
+          }
+        } catch (error) {
+          console.log('📧 Error fetching email activities, using fallback:', error);
+          // Fallback: Count from general activities
+          userEmails = userActivities.filter((activity: any) => 
+            activity.activity.toLowerCase().includes('email') || 
+            activity.activity.toLowerCase().includes('mail') ||
+            activity.activity.toLowerCase().includes('sent')
+          ).length;
+        }
         
-        console.log('📧 User emails found:', userEmails);
+        console.log('📧 Final user emails count:', userEmails);
         
         const userData = {
           activities: userActivities,
@@ -253,7 +301,6 @@ export function AdminDashboard() {
     setSelectedUser(null);
     setUserSpecificData(null);
   };
-  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -269,12 +316,16 @@ export function AdminDashboard() {
         const trackingJson = await trackingRes.json();
         
         // Sort uploads and remarks by date (most recent first)
-        const sortedUploads = (trackingJson.timeline?.uploads || []).sort((a: any, b: any) => 
-          new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime()
+        // Handle both admin (timeline) and user (recent) data structures
+        const rawUploads = trackingJson.timeline?.uploads || trackingJson.recent?.uploads || [];
+        const rawRemarks = trackingJson.timeline?.remarks || trackingJson.recent?.remarks || [];
+        
+        const sortedUploads = rawUploads.sort((a: any, b: any) => 
+          new Date(b.uploadDate || b.upload_date || 0).getTime() - new Date(a.uploadDate || a.upload_date || 0).getTime()
         );
         
-        const sortedRemarks = (trackingJson.timeline?.remarks || []).sort((a: any, b: any) => 
-          new Date(b.remarkDate).getTime() - new Date(a.remarkDate).getTime()
+        const sortedRemarks = rawRemarks.sort((a: any, b: any) => 
+          new Date(b.remarkDate || b.remark_date || 0).getTime() - new Date(a.remarkDate || a.remark_date || 0).getTime()
         );
         
         setTrackingData({
@@ -283,8 +334,14 @@ export function AdminDashboard() {
           learnerDetails: []
         });
         
-        console.log('📁 Loaded uploads:', sortedUploads.length);
-        console.log('💬 Loaded remarks:', sortedRemarks.length);
+        console.log('📁 Loaded uploads:', sortedUploads.length, sortedUploads.slice(0, 2));
+        console.log('💬 Loaded remarks:', sortedRemarks.length, sortedRemarks.slice(0, 2));
+        console.log('🔍 Tracking data structure:', Object.keys(trackingJson));
+        console.log('🔍 Sample remark data:', sortedRemarks[0]);
+        console.log('🔍 Sample upload data:', sortedUploads[0]);
+        console.log('🔍 Upload fields available:', sortedUploads[0] ? Object.keys(sortedUploads[0]) : 'No uploads');
+        console.log('🔍 Full tracking JSON structure:', trackingJson);
+        console.log('🔍 Timeline structure:', trackingJson.timeline);
         
         // Update stats with global data
         if (trackingJson.globalStats) {
@@ -296,6 +353,14 @@ export function AdminDashboard() {
             totalLearners: trackingJson.globalStats.totalLearners
           }));
         }
+      }
+
+      // Load online users for admin
+      const onlineRes = await fetch('/api/users/online?admin=true');
+      if (onlineRes.ok) {
+        const onlineData = await onlineRes.json();
+        setOnlineUsers(onlineData.onlineUsers || []);
+        console.log('🟢 Online users loaded:', onlineData.onlineUsers?.length || 0);
       }
 
       // Load ALL activities for admin (not just admin activities)
@@ -315,16 +380,39 @@ export function AdminDashboard() {
           new Date(activity.timestamp).toDateString() === today
         );
         
-        // Count emails sent (from activities)
-        const emailActivities = allActivities.filter(activity => 
-          activity.activity.toLowerCase().includes('email') || 
-          activity.activity.toLowerCase().includes('mail')
-        );
+        // Count emails sent from email_activities table
+        let totalEmailsSent = 0;
+        try {
+          const emailRes = await fetch('/api/email-activities?isAdmin=true');
+          if (emailRes.ok) {
+            const emailActivities = await emailRes.json();
+            totalEmailsSent = emailActivities.filter((email: any) => email.status === 'sent').length;
+            console.log('📧 Total emails sent from email_activities:', totalEmailsSent);
+          } else {
+            console.log('📧 Email activities API not available, using activity fallback');
+            // Fallback: Count from general activities
+            const emailActivities = allActivities.filter(activity => 
+              activity.activity.toLowerCase().includes('email') || 
+              activity.activity.toLowerCase().includes('mail') ||
+              activity.activity.toLowerCase().includes('sent')
+            );
+            totalEmailsSent = emailActivities.length;
+          }
+        } catch (error) {
+          console.log('📧 Error fetching email activities, using fallback:', error);
+          // Fallback: Count from general activities
+          const emailActivities = allActivities.filter(activity => 
+            activity.activity.toLowerCase().includes('email') || 
+            activity.activity.toLowerCase().includes('mail') ||
+            activity.activity.toLowerCase().includes('sent')
+          );
+          totalEmailsSent = emailActivities.length;
+        }
         
-        setStats(prev => ({
+        setStats((prev: any) => ({
           ...prev,
           activeToday: todayActivities.length,
-          emailsSent: emailActivities.length
+          totalEmails: totalEmailsSent
         }));
       }
 
@@ -340,13 +428,15 @@ export function AdminDashboard() {
         // Create user ID to name mapping for activities
         const userMapping: {[key: string]: string} = {};
         allUsers.forEach(user => {
-          userMapping[user.id] = user.name;
-          userMapping[user.email] = user.name; // Also map by email
+          const displayName = user.name || user.email || `User ${user.id}`;
+          userMapping[user.id] = displayName;
+          userMapping[user.email] = displayName; // Also map by email
         });
         userMapping['admin'] = 'Admin'; // Add admin mapping
         setUserMap(userMapping);
         
         console.log('👥 User mapping created:', userMapping);
+        console.log('📊 Sample activity for debugging:', activities[0]);
         
         // Update user count (excluding admin)
         setStats(prev => ({
@@ -370,10 +460,12 @@ export function AdminDashboard() {
     setStats(prev => ({ ...prev, activeToday }));
   }, [activities]);
 
-  // Cohort distribution data
+  // Cohort distribution data with better error handling
   const cohortData = trackingData.remarks.reduce((acc: Record<string, number>, remark) => {
-    const cohort = remark.learnerCohort || 'Unknown';
-    acc[cohort] = (acc[cohort] || 0) + 1;
+    const cohort = remark.learnerCohort || (remark as any).learner_cohort || 'Unknown';
+    if (cohort && cohort !== 'Unknown') {
+      acc[cohort] = (acc[cohort] || 0) + 1;
+    }
     return acc;
   }, {});
 
@@ -381,6 +473,9 @@ export function AdminDashboard() {
     name,
     value
   }));
+
+  console.log('📊 Cohort distribution data:', cohortData);
+  console.log('📈 Pie chart data:', pieData);
 
   // Activity timeline data (last 7 days)
   const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -724,7 +819,7 @@ export function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              <AnimatedCounter value={stats.totalUsers} duration={2000} />
+              <AnimatedCounter value={stats.totalUsers} duration={1500} delay={500} />
             </div>
             <p className="text-xs text-muted-foreground">Registered accounts</p>
           </CardContent>
@@ -736,7 +831,7 @@ export function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              <AnimatedCounter value={stats.totalUploads} duration={2200} />
+              <AnimatedCounter value={stats.totalUploads} duration={1500} delay={700} />
             </div>
             <p className="text-xs text-muted-foreground">Files processed</p>
           </CardContent>
@@ -748,7 +843,7 @@ export function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              <AnimatedCounter value={stats.totalRemarks} duration={2400} />
+              <AnimatedCounter value={stats.totalRemarks} duration={1500} delay={900} />
             </div>
             <p className="text-xs text-muted-foreground">Comments added</p>
           </CardContent>
@@ -760,7 +855,7 @@ export function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              <AnimatedCounter value={stats.activeToday} duration={1800} />
+              <AnimatedCounter value={stats.activeToday} duration={1500} delay={1100} />
             </div>
             <p className="text-xs text-muted-foreground">Activities today</p>
           </CardContent>
@@ -772,12 +867,251 @@ export function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              <AnimatedCounter value={stats.emailsSent} duration={2600} />
+              <AnimatedCounter value={stats.totalEmails} duration={1500} delay={1300} />
             </div>
             <p className="text-xs text-muted-foreground">Total emails tracked</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Admin Tools Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Online Users Widget */}
+        <OnlineUsersWidget />
+        
+        {/* Email Setup Widget */}
+        <EmailSetupWidget />
+        
+        {/* Cohort Distribution Chart */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Cohort Distribution</CardTitle>
+            <CardDescription>Remarks distribution across cohorts</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Admin Management Tabs - Moved above Recent Uploads */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            Admin Management
+          </CardTitle>
+          <CardDescription>System administration and user management</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="users">
+            <TabsList>
+              <TabsTrigger value="users">
+                <Users2 className="w-4 h-4 mr-2" />
+                Users
+              </TabsTrigger>
+              <TabsTrigger value="uploads">
+                <FileText className="w-4 h-4 mr-2" />
+                Recent Uploads
+              </TabsTrigger>
+              <TabsTrigger value="remarks">
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Recent Remarks
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="users" className="mt-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>{user.name}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.id}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedUserForBadge(user);
+                              setShowBadgeModal(true);
+                            }}
+                            className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0 hover:from-yellow-600 hover:to-orange-600 px-2"
+                            title="Award Badge"
+                          >
+                            🏆
+                          </Button>
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => {
+                              if (confirm(`Delete user ${user.name}?`)) {
+                                fetch(`/api/users?id=${user.id}`, { method: 'DELETE' })
+                                  .then(() => loadData());
+                              }
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TabsContent>
+            
+            <TabsContent value="uploads" className="mt-4">
+              <ScrollArea className="h-[400px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>File</TableHead>
+                      <TableHead>User</TableHead>
+                      <TableHead>Cohorts</TableHead>
+                      <TableHead>Rows</TableHead>
+                      <TableHead>Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {trackingData.csvUploads.map((upload) => (
+                      <TableRow key={upload.id}>
+                        <TableCell>{upload.filename}</TableCell>
+                        <TableCell>
+                          {(() => {
+                            const userId = upload.userId || upload.user_id;
+                            const userName = upload.userName || upload.user_name;
+                            
+                            let displayName = '';
+                            if (userId) displayName = userMap[userId];
+                            if (userId === 'admin') displayName = 'Admin';
+                            
+                            return displayName || userName || userId || 'System User';
+                          })()} 
+                        </TableCell>
+                        <TableCell>{(upload.cohorts || []).join(', ') || 'No Cohorts'}</TableCell>
+                        <TableCell>{upload.totalRows || upload.total_rows || 0}</TableCell>
+                        <TableCell>{upload.uploadDate || upload.upload_date ? new Date(upload.uploadDate || upload.upload_date).toLocaleDateString() : 'Unknown Date'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent value="remarks" className="mt-4">
+              <div className="mb-4">
+                <Input
+                  placeholder="🔍 Search remarks by learner email or remark content..."
+                  value={adminRemarkSearchQuery}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAdminRemarkSearchQuery(e.target.value)}
+                  className="max-w-md"
+                />
+              </div>
+              <ScrollArea className="h-[400px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Learner</TableHead>
+                      <TableHead>Cohort</TableHead>
+                      <TableHead>Remark</TableHead>
+                      <TableHead>By</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                  {trackingData.remarks.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        No remarks found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    trackingData.remarks
+                      .filter((remark) => {
+                        if (!adminRemarkSearchQuery) return true;
+                        const searchLower = adminRemarkSearchQuery.toLowerCase();
+                        const learnerEmail = (remark.learnerEmail || (remark as any).learner_email || '').toLowerCase();
+                        const cohort = (remark.learnerCohort || (remark as any).learner_cohort || '').toLowerCase();
+                        const remarkText = (remark.remark || '').toLowerCase();
+                        const userName = (remark.userName || (remark as any).user_name || '').toLowerCase();
+                        return learnerEmail.includes(searchLower) || 
+                               cohort.includes(searchLower) || 
+                               remarkText.includes(searchLower) ||
+                               userName.includes(searchLower);
+                      })
+                      .map((remark) => (
+                        <TableRow key={remark.id}>
+                          <TableCell>{remark.learnerEmail || (remark as any).learner_email || 'No Email'}</TableCell>
+                          <TableCell>{remark.learnerCohort || (remark as any).learner_cohort || 'No Cohort'}</TableCell>
+                          <TableCell className="max-w-[300px] truncate">{remark.remark || 'No Remark'}</TableCell>
+                          <TableCell>
+                            {(() => {
+                              const userId = remark.userId || remark.user_id;
+                              const userName = remark.userName || (remark as any).user_name;
+                              
+                              let displayName = '';
+                              if (userId) displayName = userMap[userId];
+                              if (userId === 'admin') displayName = 'Admin';
+                              
+                              return displayName || userName || userId || 'System User';
+                            })()} 
+                          </TableCell>
+                          <TableCell>{remark.remarkDate || (remark as any).remark_date ? new Date(remark.remarkDate || (remark as any).remark_date).toLocaleDateString() : 'Unknown Date'}</TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => {
+                                if (confirm('Delete this remark?')) {
+                                  fetch(`/api/tracking?remarkId=${remark.id}`, { method: 'DELETE' })
+                                    .then(() => loadData());
+                                }
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                  )}
+                </TableBody>
+              </Table>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       {/* Recent Uploads & Remarks */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -815,21 +1149,34 @@ export function AdminDashboard() {
                           </Badge>
                         </div>
                         <span className="text-xs text-gray-400">
-                          {new Date(upload.uploadDate).toLocaleDateString()}
+                          {upload.uploadDate ? new Date(upload.uploadDate).toLocaleDateString() : 'Unknown Date'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className={`text-sm font-medium ${
                           index < 3 ? 'text-white' : 'text-gray-300'
                         }`}>
-                          👤 {userMap[upload.userId] || upload.userName || 'Unknown User'}
+                          👤 {(() => {
+                            const userId = upload.userId || upload.user_id;
+                            const userName = upload.userName || upload.user_name;
+                            
+                            // Try userMap lookup first
+                            let displayName = '';
+                            if (userId) displayName = userMap[userId];
+                            
+                            // Special handling for admin
+                            if (userId === 'admin') displayName = 'Admin';
+                            
+                            // Fallback to userName or descriptive text
+                            return displayName || userName || userId || 'System User';
+                          })()}
                         </span>
                         <span className="text-xs text-gray-400">
                           {upload.totalRows} rows
                         </span>
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
-                        {new Date(upload.uploadDate).toLocaleTimeString()}
+                        {upload.uploadDate ? new Date(upload.uploadDate).toLocaleTimeString() : 'Unknown Time'}
                       </p>
                     </div>
                   </div>
@@ -873,14 +1220,27 @@ export function AdminDashboard() {
                           </Badge>
                         </div>
                         <span className="text-xs text-gray-400">
-                          {new Date(remark.remarkDate).toLocaleDateString()}
+                          {remark.remarkDate || (remark as any).remark_date ? new Date(remark.remarkDate || (remark as any).remark_date).toLocaleDateString() : 'Unknown Date'}
                         </span>
                       </div>
                       <div className="flex items-center justify-between mb-1">
                         <span className={`text-sm font-medium ${
                           index < 3 ? 'text-white' : 'text-gray-300'
                         }`}>
-                          👤 {userMap[remark.userId] || remark.userName || 'Unknown User'}
+                          👤 {(() => {
+                            const userId = remark.userId || remark.user_id;
+                            const userName = remark.userName || remark.user_name;
+                            
+                            // Try userMap lookup first
+                            let displayName = '';
+                            if (userId) displayName = userMap[userId];
+                            
+                            // Special handling for admin
+                            if (userId === 'admin') displayName = 'Admin';
+                            
+                            // Fallback to userName or descriptive text
+                            return displayName || userName || userId || 'System User';
+                          })()}
                         </span>
                         <span className="text-xs text-gray-400">
                           📧 {remark.learnerEmail}
@@ -892,7 +1252,7 @@ export function AdminDashboard() {
                         💭 "{remark.remark}"
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {new Date(remark.remarkDate).toLocaleTimeString()}
+                        {remark.remarkDate || (remark as any).remark_date ? new Date(remark.remarkDate || (remark as any).remark_date).toLocaleTimeString() : 'Unknown Time'}
                       </p>
                     </div>
                   </div>
@@ -949,7 +1309,24 @@ export function AdminDashboard() {
                             <span className={`text-sm font-medium ${
                               isRecent ? 'text-white' : 'text-gray-300'
                             }`}>
-                              {userMap[activity.userId] || userMap[activity.details?.email] || activity.userId || 'Unknown User'}
+                              {(() => {
+                                // Try multiple ways to get user name
+                                const userId = activity.userId || activity.user_id;
+                                const userEmail = activity.details?.email;
+                                
+                                // Check userMap with different keys (with null checks)
+                                let userName = '';
+                                if (userId) userName = userMap[userId];
+                                if (!userName && userEmail) userName = userMap[userEmail];
+                                
+                                // Special handling for admin
+                                if (userId === 'admin' || userEmail === 'admin') {
+                                  userName = 'Admin';
+                                }
+                                
+                                // Fallback to userId or a more descriptive unknown
+                                return userName || userId || userEmail || 'System User';
+                              })()}
                             </span>
                           </div>
                           <div className="flex flex-col items-end">
@@ -1060,135 +1437,6 @@ export function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* Admin Management Tabs */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Admin Management
-          </CardTitle>
-          <CardDescription>System administration and user management</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="users">
-            <TabsList>
-              <TabsTrigger value="users">
-                <Users2 className="w-4 h-4 mr-2" />
-                Users
-              </TabsTrigger>
-              <TabsTrigger value="uploads">
-                <FileText className="w-4 h-4 mr-2" />
-                Recent Uploads
-              </TabsTrigger>
-              <TabsTrigger value="remarks">
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Recent Remarks
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="users" className="mt-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.id}</TableCell>
-                      <TableCell>
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={() => {
-                            if (confirm(`Delete user ${user.name}?`)) {
-                              fetch(`/api/users?id=${user.id}`, { method: 'DELETE' })
-                                .then(() => loadData());
-                            }
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TabsContent>
-            
-            <TabsContent value="uploads" className="mt-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>File</TableHead>
-                    <TableHead>User</TableHead>
-                    <TableHead>Cohorts</TableHead>
-                    <TableHead>Rows</TableHead>
-                    <TableHead>Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {trackingData.csvUploads.map((upload) => (
-                    <TableRow key={upload.id}>
-                      <TableCell>{upload.filename}</TableCell>
-                      <TableCell>{upload.userName}</TableCell>
-                      <TableCell>{upload.cohorts.join(', ')}</TableCell>
-                      <TableCell>{upload.totalRows}</TableCell>
-                      <TableCell>{new Date(upload.uploadDate).toLocaleDateString()}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TabsContent>
-            
-            <TabsContent value="remarks" className="mt-4">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Learner</TableHead>
-                    <TableHead>Cohort</TableHead>
-                    <TableHead>Remark</TableHead>
-                    <TableHead>By</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {trackingData.remarks.map((remark) => (
-                    <TableRow key={remark.id}>
-                      <TableCell>{remark.learnerEmail}</TableCell>
-                      <TableCell>{remark.learnerCohort}</TableCell>
-                      <TableCell className="max-w-[300px] truncate">{remark.remark}</TableCell>
-                      <TableCell>{remark.userName}</TableCell>
-                      <TableCell>{new Date(remark.remarkDate).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Button 
-                          variant="destructive" 
-                          size="sm"
-                          onClick={() => {
-                            if (confirm('Delete this remark?')) {
-                              fetch(`/api/tracking?remarkId=${remark.id}`, { method: 'DELETE' })
-                                .then(() => loadData());
-                            }
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
       
       {/* Search Modal */}
       {showSearch && (
@@ -1197,6 +1445,22 @@ export function AdminDashboard() {
           onUserSelect={handleUserSelect}
         />
       )}
+
+
+      {/* Badge Award Modal */}
+      <BadgeAwardModal
+        isOpen={showBadgeModal}
+        onClose={() => {
+          setShowBadgeModal(false);
+          setSelectedUserForBadge(null);
+        }}
+        selectedUser={selectedUserForBadge}
+        userStats={selectedUserForBadge ? {
+          remarks: trackingData.remarks.filter(r => r.userId === selectedUserForBadge.id || (r as any).user_id === selectedUserForBadge.id).length,
+          uploads: trackingData.csvUploads.filter(u => u.userId === selectedUserForBadge.id || (u as any).user_id === selectedUserForBadge.id).length,
+          totalActivities: 0 // Can be enhanced with activity data
+        } : undefined}
+      />
       
     </div>
   );

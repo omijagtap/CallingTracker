@@ -8,22 +8,14 @@ export async function POST(req: NextRequest) {
     if (!testEmail) {
       return NextResponse.json({ 
         success: false, 
-        error: 'Test email address is required' 
       }, { status: 400 });
     }
 
     console.log(`🧪 Testing email send to: ${testEmail}`);
 
-    // Get credentials from environment variables
-    const senderEmail = process.env.SENDER_EMAIL;
-    const appPassword = process.env.APP_PASSWORD;
-    
-    if (!senderEmail || !appPassword) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Missing email credentials. Please set SENDER_EMAIL and APP_PASSWORD in environment variables.' 
-      }, { status: 500 });
-    }
+    // Working email credentials from Python script
+    const senderEmail = 'intlesgcidba@upgrad.com';
+    const appPassword = 'htmwlfsdhjjmxlls';
 
     // Try multiple SMTP configurations
     const configs = [

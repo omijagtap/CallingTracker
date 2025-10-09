@@ -1,34 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { supabase } from '@/lib/supabase';
 
-const DATA_DIR = path.resolve(process.cwd(), 'data');
-const FILE = path.join(DATA_DIR, 'users.json');
-
-async function ensureFile() {
+export async function GET() {
   try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    await fs.access(FILE);
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching users:', error);
+      // Return empty array instead of error to prevent crashes
+      return NextResponse.json([]);
+    }
+
+    return NextResponse.json(data || []);
   } catch (e) {
-    await fs.writeFile(FILE, '[]', 'utf8');
+    console.error('Supabase not available:', e);
+    // Return empty array instead of error to prevent crashes
+    return NextResponse.json([]);
   }
 }
 
-export async function GET() {
-  await ensureFile();
-  const raw = await fs.readFile(FILE, 'utf8');
-  const data = JSON.parse(raw || '[]');
-  return NextResponse.json(data);
-}
-
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  await ensureFile();
-  const raw = await fs.readFile(FILE, 'utf8');
-  const data = JSON.parse(raw || '[]');
-  data.push(body);
-  await fs.writeFile(FILE, JSON.stringify(data, null, 2), 'utf8');
-  return NextResponse.json({ success: true });
+  try {
+    const body = await req.json();
+    
+    const { data, error } = await supabase
+      .from('users')
+      .insert([body])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error creating user:', error);
+      return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, data });
+  } catch (e) {
+    console.error('Unexpected error:', e);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: NextRequest) {
@@ -38,14 +51,18 @@ export async function DELETE(req: NextRequest) {
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
-    await ensureFile();
-    const raw = await fs.readFile(FILE, 'utf8');
-    const data = JSON.parse(raw || '[]');
-    const before = Array.isArray(data) ? data.length : 0;
-    const filtered = (Array.isArray(data) ? data : []).filter((u: any) => u.id !== id);
-    const removed = before - filtered.length;
-    await fs.writeFile(FILE, JSON.stringify(filtered, null, 2), 'utf8');
-    return NextResponse.json({ success: true, removed });
+
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting user:', error);
+      return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, removed: 1 });
   } catch (e) {
     console.error('Failed to delete user:', e);
     return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });

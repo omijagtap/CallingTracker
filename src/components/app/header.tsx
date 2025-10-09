@@ -1,29 +1,153 @@
-
-"use client"
-import { Logo } from '@/components/logo';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+"use client";
 import { useEffect, useState, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context-supabase';
+import { Button } from '../ui/button';
+import { UserBadges } from './user-badges';
+import { BadgeModal } from './badge-modal';
 import { ProfileDropdown } from './profile-dropdown';
-import { useAuth } from '@/lib/auth-context';
-import { User } from 'lucide-react';
 
 export function AppHeader() {
-    const pathname = usePathname();
-    
-    // Don't show header on landing, login, or signup pages
-    if (pathname === '/landing' || pathname === '/login' || pathname === '/signup') {
-        return null;
-    }
-    
+    const { user: authUser, logout, isAdmin } = useAuth();
     const [isClient, setIsClient] = useState(false);
     const [hasData, setHasData] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [showProfile, setShowProfile] = useState(false);
     const [currentUser, setCurrentUser] = useState<{ email: string; name: string } | null>(null);
+    const [showBadgeModal, setShowBadgeModal] = useState(false);
 
-    const { user: authUser, logout, isAdmin } = useAuth();
+    // Enhanced online status tracking with browser activity detection
+    useEffect(() => {
+        if (authUser) {
+            let isUserActive = true;
+            let lastActivity = Date.now();
+            let onlineInterval: NodeJS.Timeout;
+            let activityCheckInterval: NodeJS.Timeout;
+
+            // Update user's online status
+            const updateOnlineStatus = async (forceOnline = false) => {
+                const isCurrentlyActive = forceOnline || (Date.now() - lastActivity < 60000);
+                
+                try {
+                    await fetch('/api/users/online', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            userId: authUser.id, 
+                            isOnline: isCurrentlyActive && !document.hidden,
+                            lastSeen: new Date().toISOString(),
+                            isActive: isCurrentlyActive
+                        })
+                    });
+                } catch (error) {
+                    console.log('Online status update failed:', error);
+                }
+            };
+
+            // Set offline status
+            const setOfflineStatus = async () => {
+                try {
+                    await fetch('/api/users/online', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            userId: authUser.id, 
+                            isOnline: false,
+                            lastSeen: new Date().toISOString(),
+                            isActive: false
+                        })
+                    });
+                } catch (error) {
+                    console.log('Offline status update failed:', error);
+                }
+            };
+
+            // Track user activity
+            const trackActivity = () => {
+                lastActivity = Date.now();
+                isUserActive = true;
+            };
+
+            // Activity event listeners
+            const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+            activityEvents.forEach(event => {
+                document.addEventListener(event, trackActivity, true);
+            });
+
+            // Set online status immediately
+            updateOnlineStatus(true);
+
+            // Update online status every 30 seconds
+            onlineInterval = setInterval(() => {
+                updateOnlineStatus();
+            }, 30000);
+
+            // Check for inactivity every 10 seconds
+            activityCheckInterval = setInterval(() => {
+                const timeSinceActivity = Date.now() - lastActivity;
+                if (timeSinceActivity > 300000) {
+                    isUserActive = false;
+                }
+            }, 10000);
+
+            // Handle page visibility changes
+            const handleVisibilityChange = () => {
+                if (document.hidden) {
+                    setOfflineStatus();
+                } else {
+                    lastActivity = Date.now();
+                    updateOnlineStatus(true);
+                }
+            };
+
+            // Handle page unload
+            const handleBeforeUnload = () => {
+                fetch('/api/users/online', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: authUser.id,
+                        isOnline: false,
+                        lastSeen: new Date().toISOString(),
+                        isActive: false
+                    }),
+                    keepalive: true
+                }).catch(() => {});
+            };
+
+            // Handle window focus/blur
+            const handleFocus = () => {
+                lastActivity = Date.now();
+                updateOnlineStatus(true);
+            };
+
+            const handleBlur = () => {
+                setOfflineStatus();
+            };
+
+            // Add event listeners
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+            window.addEventListener('beforeunload', handleBeforeUnload);
+            window.addEventListener('focus', handleFocus);
+            window.addEventListener('blur', handleBlur);
+
+            // Cleanup function
+            return () => {
+                clearInterval(onlineInterval);
+                clearInterval(activityCheckInterval);
+                
+                activityEvents.forEach(event => {
+                    document.removeEventListener(event, trackActivity, true);
+                });
+                
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
+                window.removeEventListener('beforeunload', handleBeforeUnload);
+                window.removeEventListener('focus', handleFocus);
+                window.removeEventListener('blur', handleBlur);
+                
+                setOfflineStatus();
+            };
+        }
+    }, [authUser]);
 
     useEffect(() => {
         setIsClient(true);
@@ -31,40 +155,36 @@ export function AppHeader() {
         const checkData = () => {
             const savedState = localStorage.getItem('appState');
             if (savedState) {
-                const parsedState = JSON.parse(savedState);
-                setHasData(parsedState.uploadState === 'success' && parsedState.learnerData?.length > 0);
+                try {
+                    const parsedState = JSON.parse(savedState);
+                    setHasData(parsedState.uploadState === 'success' && parsedState.learnerData?.length > 0);
+                } catch {
+                    setHasData(false);
+                }
             } else {
                 setHasData(false);
             }
-            // Check auth state (localStorage-based)
-            const savedUser = localStorage.getItem('current_user');
+            
             if (authUser) {
-                setCurrentUser({ email: authUser.email, name: authUser.name });
-                setIsLoggedIn(true);
-            } else if (savedUser) {
-                const user = JSON.parse(savedUser);
-                setCurrentUser(user);
+                setCurrentUser({ 
+                    email: authUser.email || '', 
+                    name: authUser.name || authUser.email || 'User' 
+                });
                 setIsLoggedIn(true);
             } else {
-                setCurrentUser(null);
                 setIsLoggedIn(false);
+                setCurrentUser(null);
             }
         };
 
-        checkData(); // Initial check
-
-        const interval = setInterval(checkData, 1000); // Check every second
-
-        // Also listen for custom event
-        window.addEventListener('storageUpdated', checkData);
+        checkData();
+        const interval = setInterval(checkData, 5000);
 
         return () => {
             clearInterval(interval);
-            window.removeEventListener('storageUpdated', checkData);
         };
-    }, []);
+    }, [authUser]);
 
-    // Hide timer to avoid flicker when moving between button and dropdown
     const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const handleMouseEnter = () => {
@@ -82,24 +202,28 @@ export function AppHeader() {
 
     const handleSummaryClick = () => {
         if (hasData) {
-            // Dispatch a custom event to trigger summary view
             window.dispatchEvent(new CustomEvent('showSummary'));
         }
     };
 
     const handleDashboardClick = () => {
-        // Dispatch a custom event to trigger dashboard view
         window.dispatchEvent(new CustomEvent('showDashboard'));
     };
 
     const handleHomeClick = () => {
-        // Dispatch a custom event to trigger home view
         window.dispatchEvent(new CustomEvent('showHome'));
     };
 
     const handleCallingTrackerClick = () => {
-        // Dispatch a custom event to trigger calling tracker view
         window.dispatchEvent(new CustomEvent('showCallingTracker'));
+    };
+
+    const handleRankingsClick = () => {
+        window.dispatchEvent(new CustomEvent('showRankings'));
+    };
+
+    const handleProfileClick = () => {
+        window.dispatchEvent(new CustomEvent('showProfile'));
     };
 
     return (
@@ -116,16 +240,6 @@ export function AppHeader() {
                 <div className='flex items-center gap-4'>
                     {isClient && isLoggedIn && currentUser && (
                         <>
-                            {isAdmin && (
-                                <Button
-                                    id="calling-tracker-link"
-                                    variant="link"
-                                    onClick={handleCallingTrackerClick}
-                                    className="text-foreground"
-                                >
-                                    Calling Tracker
-                                </Button>
-                            )}
                             <Button
                                 id="home-link"
                                 variant="link"
@@ -134,6 +248,7 @@ export function AppHeader() {
                             >
                                 Home
                             </Button>
+                            
                             {!isAdmin && (
                                 <Button
                                     id="dashboard-link"
@@ -144,49 +259,94 @@ export function AppHeader() {
                                     Dashboard
                                 </Button>
                             )}
+                            
+                            {isAdmin && (
+                                <Button
+                                    id="calling-tracker-link"
+                                    variant="link"
+                                    onClick={handleCallingTrackerClick}
+                                    className="text-foreground"
+                                >
+                                    Calling Tracker
+                                </Button>
+                            )}
+                            
                             <Button
                                 id="summary-link"
                                 variant="link"
                                 onClick={handleSummaryClick}
-                                className={cn(
-                                    "text-foreground transition-opacity",
-                                    { "opacity-50 pointer-events-none": !hasData }
-                                )}
-                                disabled={!hasData}
+                                className="text-foreground"
                             >
                                 Summary
                             </Button>
+                            
+                            <Button
+                                id="rankings-link"
+                                variant="link"
+                                onClick={handleRankingsClick}
+                                className="text-foreground"
+                            >
+                                🏆 Rankings
+                            </Button>
+                            
+                            {!isAdmin && (
+                                <UserBadges 
+                                    userId={currentUser?.email} 
+                                    displayMode="icon" 
+                                    onClick={() => setShowBadgeModal(true)}
+                                />
+                            )}
+                            
                             <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
                                 <button
                                     title={currentUser?.name || currentUser?.email || 'upGrad01'}
-                                    className="inline-flex items-center gap-3 whitespace-nowrap text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded-md h-10 px-2 bg-transparent border-0"
+                                    className="inline-flex items-center gap-3 whitespace-nowrap text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/50 rounded-full h-12 px-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 backdrop-blur-sm"
                                     onClick={() => setShowProfile(!showProfile)}
                                 >
-                                                                    <div className="h-8 w-8 flex items-center justify-center rounded-sm text-sm font-medium text-white transition-all"
-                                                                                     style={{
-                                                                                         background: 'linear-gradient(135deg,#ff8a65,#ffb74d)',
-                                                                                         border: '1px solid rgba(255,255,255,0.08)',
-                                                                                         boxShadow: '0 6px 18px rgba(255,140,50,0.12)',
-                                                                                         backdropFilter: 'blur(4px)'
-                                                                                     }}>
-                                                                                    {(currentUser?.name || currentUser?.email || 'U').charAt(0).toUpperCase()}
-                                                                            </div>
-                                    <span className="hidden md:inline-block font-medium text-foreground truncate max-w-[10rem]">{currentUser?.name || currentUser?.email}</span>
+                                    <div className="h-9 w-9 flex items-center justify-center rounded-full text-sm font-semibold text-white transition-all duration-200 hover:scale-105"
+                                         style={{
+                                             background: 'linear-gradient(135deg, #f59e0b, #f97316, #ef4444)',
+                                             border: '2px solid rgba(255,255,255,0.15)',
+                                             boxShadow: '0 8px 25px rgba(245, 158, 11, 0.4), inset 0 1px 0 rgba(255,255,255,0.2)',
+                                             backdropFilter: 'blur(8px)'
+                                         }}>
+                                        {(currentUser?.name || currentUser?.email || 'U').charAt(0).toUpperCase()}
+                                    </div>
+                                    <span className="hidden md:inline-block font-medium text-white/90 truncate max-w-[10rem]">{currentUser?.name || currentUser?.email}</span>
                                 </button>
                                 {showProfile && (
                                     <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
                                       <ProfileDropdown 
                                           email={currentUser?.email || ''}
                                           name={currentUser?.name || ''}
-                                          onLogout={() => {
+                                          onProfile={() => {
+                                              handleProfileClick();
+                                              setShowProfile(false);
+                                          }}
+                                          onLogout={async () => {
                                               try {
+                                                  if (authUser) {
+                                                      try {
+                                                          await fetch('/api/users/online', {
+                                                              method: 'POST',
+                                                              headers: { 'Content-Type': 'application/json' },
+                                                              body: JSON.stringify({
+                                                                  userId: authUser.id,
+                                                                  isOnline: false,
+                                                                  lastSeen: new Date().toISOString(),
+                                                                  isActive: false
+                                                              })
+                                                          });
+                                                          console.log('User marked offline on logout');
+                                                      } catch (offlineError) {
+                                                          console.log('Failed to mark user offline on logout:', offlineError);
+                                                      }
+                                                  }
                                                   logout();
                                               } catch (e) {
-                                                  localStorage.removeItem('current_user');
                                                   setIsLoggedIn(false);
                                                   setCurrentUser(null);
                                               }
-                                              setShowProfile(false);
                                           }}
                                       />
                                     </div>
@@ -196,6 +356,12 @@ export function AppHeader() {
                     )}
                 </div>
             </div>
+            
+            <BadgeModal
+                isOpen={showBadgeModal}
+                onClose={() => setShowBadgeModal(false)}
+                userId={currentUser?.email}
+            />
         </header>
     );
 }

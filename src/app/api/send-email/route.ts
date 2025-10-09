@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendEmailReport, testEmailConfiguration } from '@/lib/email-service';
+import { sendSimpleEmail, testEmailConnection } from '@/lib/email-service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,28 +7,28 @@ export async function POST(req: NextRequest) {
     const { action, ...data } = body;
 
     if (action === 'test') {
-      // Test SMTP configuration
-      const result = await testEmailConfiguration();
+      // Test SMTP connection
+      const result = await testEmailConnection();
       return NextResponse.json(result);
     }
 
     if (action === 'send') {
-      // Send email report
-      const { to, report, userInfo } = data;
+      // Send simple email
+      const { to, subject, message, userId } = data;
       
-      if (!to || !report || !userInfo) {
+      if (!to || !subject || !message) {
         return NextResponse.json(
-          { success: false, error: 'Missing required fields' },
+          { success: false, error: 'Missing required fields: to, subject, message' },
           { status: 400 }
         );
       }
 
-      const result = await sendEmailReport({ to, report, userInfo });
+      const result = await sendSimpleEmail({ to, subject, message, userId });
       return NextResponse.json(result);
     }
 
     return NextResponse.json(
-      { success: false, error: 'Invalid action' },
+      { success: false, error: 'Invalid action. Use "test" or "send"' },
       { status: 400 }
     );
 
@@ -42,9 +42,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  // Test endpoint to check SMTP configuration
+  // Test endpoint to check SMTP connection
   try {
-    const result = await testEmailConfiguration();
+    const result = await testEmailConnection();
     return NextResponse.json(result);
   } catch (error: any) {
     return NextResponse.json(

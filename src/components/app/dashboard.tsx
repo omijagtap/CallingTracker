@@ -69,10 +69,17 @@ export function Dashboard({ userId, isOpen, onClose }: DashboardProps) {
 
   const loadGlobalStats = async () => {
     try {
-      // localStorage sources
-      const users = JSON.parse(localStorage.getItem('app_users') || '[]');
-      const activities = JSON.parse(localStorage.getItem('user_activity') || '[]');
-      const remarks = JSON.parse(localStorage.getItem('user_remarks') || '[]');
+      // Fetch from Supabase APIs
+      const [usersRes, activitiesRes, trackingRes] = await Promise.all([
+        fetch('/api/users'),
+        fetch('/api/activity'),
+        fetch('/api/tracking?admin=true')
+      ]);
+      
+      const users = usersRes.ok ? await usersRes.json() : [];
+      const activities = activitiesRes.ok ? await activitiesRes.json() : [];
+      const trackingData = trackingRes.ok ? await trackingRes.json() : {};
+      const remarks = trackingData.recent?.remarks || [];
 
       let totalUsers = Array.isArray(users) ? users.length : 0;
       let totalActivities = Array.isArray(activities) ? activities.length : 0;
@@ -109,9 +116,16 @@ export function Dashboard({ userId, isOpen, onClose }: DashboardProps) {
   const [usersList, setUsersList] = useState<Array<{id: string, email: string, name?: string, activityCount: number, remarkCount: number}>>([]);
   const loadUsersOverview = async () => {
     try {
-      const localUsers = JSON.parse(localStorage.getItem('app_users') || '[]');
-      const activities = JSON.parse(localStorage.getItem('user_activity') || '[]');
-      const remarks = JSON.parse(localStorage.getItem('user_remarks') || '[]');
+      const [usersRes, activitiesRes, trackingRes] = await Promise.all([
+        fetch('/api/users'),
+        fetch('/api/activity'),
+        fetch('/api/tracking?admin=true')
+      ]);
+      
+      const localUsers = usersRes.ok ? await usersRes.json() : [];
+      const activities = activitiesRes.ok ? await activitiesRes.json() : [];
+      const trackingData = trackingRes.ok ? await trackingRes.json() : {};
+      const remarks = trackingData.recent?.remarks || [];
 
       // Build a map from user id to counts
       const map: Record<string, {id: string, email: string, name?: string, activityCount: number, remarkCount: number}> = {};
@@ -160,10 +174,13 @@ export function Dashboard({ userId, isOpen, onClose }: DashboardProps) {
     }
   };
 
-  const loadCallingActivities = () => {
+  const loadCallingActivities = async () => {
     try {
-      const userActivities = JSON.parse(localStorage.getItem('user_activity') || '[]')
-        .filter((activity: any) => activity.userId === userId)
+      const activitiesRes = await fetch('/api/activity');
+      const allActivities = activitiesRes.ok ? await activitiesRes.json() : [];
+      
+      const userActivities = allActivities
+        .filter((activity: any) => (activity.userId || activity.user_id) === userId)
         .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
         .slice(0, 20); // Show last 20 activities
 
@@ -174,10 +191,11 @@ export function Dashboard({ userId, isOpen, onClose }: DashboardProps) {
     }
   };
 
-  const calculateStats = () => {
+  const calculateStats = async () => {
     try {
-      const remarks = JSON.parse(localStorage.getItem('user_remarks') || '[]')
-        .filter((remark: any) => remark.userId === userId);
+      const trackingRes = await fetch(`/api/tracking?userId=${encodeURIComponent(userId)}`);
+      const trackingData = trackingRes.ok ? await trackingRes.json() : {};
+      const remarks = trackingData.recent?.remarks || [];
       
       // Get unique learners who have remarks
       const uniqueLearnersWithRemarks = new Set();

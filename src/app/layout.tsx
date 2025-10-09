@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
 import { cn } from '@/lib/utils';
-import { AppHeader } from '@/components/app/header';
-import { AuthProvider } from '@/lib/auth-context';
+import { AuthProvider } from '@/lib/auth-context-supabase';
 
 export const metadata: Metadata = {
   title: 'Calling Tracker - UpGrad Education Platform',
@@ -27,7 +26,6 @@ export default function RootLayout({
       </head>
       <body className={cn('font-body antialiased min-h-screen bg-background')}>
         <AuthProvider>
-          <AppHeader />
           {children}
           <Toaster />
         </AuthProvider>

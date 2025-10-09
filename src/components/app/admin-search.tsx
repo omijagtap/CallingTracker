@@ -306,6 +306,7 @@ function UserDashboardView({ userId, userDetails }: { userId: string; userDetail
     remarks: any[];
     stats: any;
   }>({ activities: [], uploads: [], remarks: [], stats: {} });
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -322,6 +323,17 @@ function UserDashboardView({ userId, userDetails }: { userId: string; userDetail
         
         const userUploads = trackingData.timeline?.uploads?.filter((u: any) => u.userId === userId) || [];
         const userRemarks = trackingData.timeline?.remarks?.filter((r: any) => r.userId === userId) || [];
+
+        // Load user profile
+        try {
+          const profileRes = await fetch(`/api/profile?userId=${userId}`);
+          if (profileRes.ok) {
+            const profile = await profileRes.json();
+            setUserProfile(profile);
+          }
+        } catch (error) {
+          console.log('Could not load user profile');
+        }
 
         // Calculate stats
         const stats = {
@@ -391,6 +403,46 @@ function UserDashboardView({ userId, userDetails }: { userId: string; userDetail
           <div className="text-xs text-gray-400">Cohorts Worked</div>
         </div>
       </div>
+
+      {/* Profile Information */}
+      {userProfile && (
+        <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 p-4 rounded-lg border border-purple-500/20">
+          <h4 className="font-semibold mb-3 flex items-center gap-2 text-white">
+            <User className="w-4 h-4 text-purple-400" />
+            📋 Profile Information
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div>
+              <span className="text-gray-400">Account Type:</span>
+              <span className="text-white ml-2">📋 Program Coordinator</span>
+            </div>
+            {userProfile.phone && (
+              <div>
+                <span className="text-gray-400">Phone:</span>
+                <span className="text-white ml-2">{userProfile.phone}</span>
+              </div>
+            )}
+            {userProfile.location && (
+              <div>
+                <span className="text-gray-400">Location:</span>
+                <span className="text-white ml-2">{userProfile.location}</span>
+              </div>
+            )}
+            {userProfile.reportingManager && (
+              <div>
+                <span className="text-gray-400">Manager:</span>
+                <span className="text-white ml-2">{userProfile.reportingManager}</span>
+              </div>
+            )}
+          </div>
+          {userProfile.bio && (
+            <div className="mt-3">
+              <span className="text-gray-400 text-sm">Bio:</span>
+              <p className="text-white text-sm mt-1 bg-black/20 p-2 rounded">{userProfile.bio}</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Last Active & Status */}
       <div className="bg-white/5 p-3 rounded-lg border border-white/10">

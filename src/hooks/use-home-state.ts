@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@/lib/auth-context-supabase";
 import { z } from "zod";
 import { LearnerData, Remark } from "@/lib/types";
 
@@ -47,7 +47,23 @@ export function useHomeState() {
   const [isSummaryView, setSummaryView] = useState(INITIAL_STATE.isSummaryView);
   const [isReportGenerated, setReportGenerated] = useState(INITIAL_STATE.isReportGenerated);
   const [colIndices, setColIndices] = useState(INITIAL_STATE.colIndices);
-  const [showDashboard, setShowDashboard] = useState(INITIAL_STATE.showDashboard);
+  
+  // Initialize showDashboard from localStorage to persist state
+  const [showDashboard, setShowDashboardState] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('showDashboard');
+      return saved === 'true';
+    }
+    return INITIAL_STATE.showDashboard;
+  });
+  
+  const setShowDashboard = useCallback((value: boolean) => {
+    setShowDashboardState(value);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('showDashboard', value.toString());
+    }
+  }, []);
+  
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   return {

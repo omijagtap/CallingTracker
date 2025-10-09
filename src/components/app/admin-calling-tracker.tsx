@@ -22,7 +22,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth-context-supabase';
 
 interface TrackingData {
   csvUploads: Array<{
@@ -68,9 +68,17 @@ export function AdminCallingTracker() {
       const response = await fetch('/api/tracking?admin=true');
       if (response.ok) {
         const data = await response.json();
+        console.log('📊 Admin Calling Tracker data:', data);
+        
+        const uploads = data.timeline?.uploads || [];
+        const remarks = data.timeline?.remarks || [];
+        
+        console.log('📁 Uploads loaded:', uploads.length, uploads.slice(0, 2));
+        console.log('💬 Remarks loaded:', remarks.length, remarks.slice(0, 2));
+        
         setTrackingData({
-          csvUploads: data.timeline?.uploads || [],
-          remarks: data.timeline?.remarks || []
+          csvUploads: uploads,
+          remarks: remarks
         });
       }
       setLoading(false);
@@ -94,7 +102,7 @@ export function AdminCallingTracker() {
       'Cohort': remark.learnerCohort,
       'Remark': remark.remark,
       'Added By': remark.userName,
-      'Date': new Date(remark.remarkDate).toLocaleDateString(),
+      'Date': remark.remarkDate ? new Date(remark.remarkDate).toLocaleDateString() : 'Unknown Date',
       'CSV File': upload.filename
     }));
 
@@ -131,8 +139,28 @@ export function AdminCallingTracker() {
     const upload = trackingData.csvUploads.find(u => u.id === uploadId);
     if (!upload || !user) return;
 
-    const recipient = prompt('Enter recipient email address:');
-    if (!recipient) return;
+    // Try to get user's reporting manager email first
+    let recipient = '';
+    try {
+      const profileRes = await fetch(`/api/profile?userId=${user.id}`);
+      if (profileRes.ok) {
+        const profile = await profileRes.json();
+        if (profile.reportingManagerEmail) {
+          const useManagerEmail = confirm(`Send report to your reporting manager (${profile.reportingManager}: ${profile.reportingManagerEmail})?`);
+          if (useManagerEmail) {
+            recipient = profile.reportingManagerEmail;
+          }
+        }
+      }
+    } catch (error) {
+      console.log('Could not fetch user profile');
+    }
+
+    // If no manager email or user declined, ask for manual input
+    if (!recipient) {
+      recipient = prompt('Enter recipient email address:') || '';
+      if (!recipient) return;
+    }
 
     try {
       // Get remarks for this upload's cohorts
@@ -145,7 +173,7 @@ export function AdminCallingTracker() {
         'Cohort': remark.learnerCohort,
         'Remark': remark.remark,
         'Added By': remark.userName,
-        'Date': new Date(remark.remarkDate).toLocaleDateString()
+        'Date': remark.remarkDate ? new Date(remark.remarkDate).toLocaleDateString() : 'Unknown Date'
       }));
 
       const emailReport = {
@@ -287,7 +315,7 @@ export function AdminCallingTracker() {
                       <div className="flex-1">
                         <h3 className="font-semibold">{upload.filename}</h3>
                         <p className="text-sm text-muted-foreground">
-                          Uploaded by {upload.userName} on {new Date(upload.uploadDate).toLocaleDateString()}
+                          Uploaded by {upload.userName || 'Unknown User'} on {upload.uploadDate ? new Date(upload.uploadDate).toLocaleDateString() : 'Unknown Date'}
                         </p>
                         <div className="flex gap-2 mt-2">
                           {upload.cohorts.map((cohort, index) => (
