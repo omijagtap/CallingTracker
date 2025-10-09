@@ -1,10 +1,51 @@
 "use client";
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Database, Upload, CheckCircle, AlertCircle } from 'lucide-react';
+
+// Inline UI Components to avoid import issues
+const Button = ({ children, className = "", disabled = false, onClick, ...props }: any) => (
+  <button 
+    disabled={disabled}
+    onClick={onClick}
+    className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${className}`}
+    {...props}
+  >
+    {children}
+  </button>
+);
+
+const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className}`}>
+    {children}
+  </div>
+);
+
+const CardHeader = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`flex flex-col space-y-1.5 p-6 ${className}`}>{children}</div>
+);
+
+const CardTitle = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <h3 className={`text-2xl font-semibold leading-none tracking-tight ${className}`}>{children}</h3>
+);
+
+const CardDescription = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <p className={`text-sm text-muted-foreground ${className}`}>{children}</p>
+);
+
+const CardContent = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`p-6 pt-0 ${className}`}>{children}</div>
+);
+
+const Alert = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`relative w-full rounded-lg border p-4 ${className}`}>
+    {children}
+  </div>
+);
+
+const AlertDescription = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`text-sm ${className}`}>{children}</div>
+);
 
 export default function MigrationPage() {
   const [loading, setLoading] = useState(false);
