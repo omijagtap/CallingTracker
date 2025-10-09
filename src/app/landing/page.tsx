@@ -1,6 +1,57 @@
 'use client';
 
 import Link from 'next/link';
+import { 
+  Upload, 
+  MessageSquare, 
+  BarChart3, 
+  Mail, 
+  Users, 
+  CheckCircle,
+  ArrowRight,
+  Star,
+  Shield,
+  Zap
+} from 'lucide-react';
+
+// Inline UI Components to avoid import issues
+const Button = ({ children, className = "", ...props }: any) => (
+  <button className={`inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${className}`} {...props}>
+    {children}
+  </button>
+);
+
+const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`rounded-lg border bg-card text-card-foreground shadow-sm ${className}`}>
+    {children}
+  </div>
+);
+
+const CardContent = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`p-6 pt-0 ${className}`}>{children}</div>
+);
+
+const CardDescription = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <p className={`text-sm text-muted-foreground ${className}`}>{children}</p>
+);
+
+const CardHeader = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`flex flex-col space-y-1.5 p-6 ${className}`}>{children}</div>
+);
+
+const CardTitle = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <h3 className={`text-2xl font-semibold leading-none tracking-tight ${className}`}>{children}</h3>
+);
+
+const Badge = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 ${className}`}>
+    {children}
+  </div>
+);
+
+const AnimatedCounter = ({ value }: { value: number }) => (
+  <span className="font-bold">{value}</span>
+);
 
 export default function LandingPage() {
   return (
