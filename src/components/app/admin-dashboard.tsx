@@ -46,7 +46,6 @@ import { AdminSearch } from './admin-search';
 import { AnimatedCounter } from '../ui/animated-counter';
 import { BadgeAwardModal } from './badge-award-modal';
 import { OnlineUsersWidget } from './online-users-widget';
-import { EmailSetupWidget } from './email-setup-widget';
 
 interface TrackingData {
   csvUploads: Array<{
@@ -875,12 +874,9 @@ export function AdminDashboard() {
       </div>
 
       {/* Admin Tools Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Online Users Widget */}
         <OnlineUsersWidget />
-        
-        {/* Email Setup Widget */}
-        <EmailSetupWidget />
         
         {/* Cohort Distribution Chart */}
         <Card className="lg:col-span-2">

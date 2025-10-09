@@ -1,0 +1,13 @@
+# COPY THESE ENVIRONMENT VARIABLES TO RENDER
+# Add each variable one by one in Render Dashboard > Environment Variables
+
+NODE_ENV=production
+NEXT_PUBLIC_SUPABASE_URL=https://mkmuhctmddhttosgcpmo.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1rbXVoY3RtZGRodHRvc2djcG1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM3MzE4NzQsImV4cCI6MjA0OTMwNzg3NH0.YOJhNTcOlxKGJCGKJmxvJgJhJGJCGKJCGKJCGKJCGK
+SMTP_HOST=smtp.office365.com
+SMTP_PORT=587
+SMTP_USER=intlesgcidba@upgrad.com
+SMTP_PASS=htmwlfsdhjjmxlls
+ADMIN_USERNAME=Air01
+ADMIN_PASSWORD=Omkar@123
+NEXTAUTH_SECRET=upgrad-calling-tracker-secret-2024-key
